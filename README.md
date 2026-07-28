@@ -13,18 +13,19 @@ Next.js app shell for live mortgage broker pricing (purchase, rate/term refinanc
 
 ## Preview
 
-- Brand landing: [http://localhost:3000](http://localhost:3000)
-- Step 1 loan pricing: [http://localhost:3000/step-1](http://localhost:3000/step-1)
-- Complete app (portal + Step 1 in one flow): [http://localhost:3000/complete](http://localhost:3000/complete)
-
 ```bash
 npm install
-cp .env.example .env.local
-# set NEXT_PUBLIC_GOOGLE_MAPS_API_KEY in .env.local
-npm run dev
+cp .env.example .env.local   # add NEXT_PUBLIC_GOOGLE_MAPS_API_KEY
+npm run preview
 ```
 
-Open the brand portal, then use **Request Consultation** to continue into Step 1.
+Then open **http://localhost:3000** — the complete IFUND EQUITY flow loads by default (brand portal → Step 1 pricing).
+
+Other routes:
+- `/complete` — same complete flow
+- `/step-1` — Step 1 form only
+
+The root `complete` file is a reference copy. It is not opened directly; preview through Next.js with `npm run preview`.
 
 ## Environment
 

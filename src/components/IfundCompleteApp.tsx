@@ -144,6 +144,7 @@ function BrandPortal({ onContinue }: { onContinue: () => void }) {
           width={280}
           height={280}
           priority
+          unoptimized
           className="mb-2 h-auto w-[200px] sm:w-[240px]"
         />
         <p className="mt-1 font-sans text-sm tracking-widest text-brand-slate uppercase">
@@ -233,6 +234,7 @@ function MortgagePricingStep({ onBack }: { onBack: () => void }) {
               alt="IFUND EQUITY"
               width={32}
               height={32}
+              unoptimized
               className="h-8 w-8 object-contain"
             />
             <span className="font-serif text-lg font-bold tracking-wide text-brand-navy">

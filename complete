@@ -1,4 +1,8 @@
-// complete — full IFUND EQUITY app from entire chat (portal + Step 1 + US Places + pricing)
+// To preview this app, do NOT open this file directly.
+// Run:  npm install && npm run preview
+// Then open:  http://localhost:3000
+// Canonical runnable entry: src/app/page.tsx → IfundCompleteApp
+
 'use client';
 
 /**
@@ -44,6 +48,39 @@ function UsAddressInput({
   required?: boolean;
 }) {
   const hasMapsKey = Boolean(process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY);
+
+  if (!hasMapsKey) {
+    return (
+      <input
+        type="text"
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        required={required}
+        className={addressInputClassName}
+        placeholder="Enter US street address, city, state, zip"
+        autoComplete="street-address"
+      />
+    );
+  }
+
+  return (
+    <GoogleUsAddressInput
+      value={value}
+      onChange={onChange}
+      required={required}
+    />
+  );
+}
+
+function GoogleUsAddressInput({
+  value,
+  onChange,
+  required,
+}: {
+  value: string;
+  onChange: (value: string) => void;
+  required?: boolean;
+}) {
   const [autocomplete, setAutocomplete] =
     useState<google.maps.places.Autocomplete | null>(null);
 
@@ -52,7 +89,7 @@ function UsAddressInput({
     libraries,
   });
 
-  if (!hasMapsKey || loadError) {
+  if (loadError) {
     return (
       <input
         type="text"
@@ -112,6 +149,7 @@ function BrandPortal({ onContinue }: { onContinue: () => void }) {
           width={280}
           height={280}
           priority
+          unoptimized
           className="mb-2 h-auto w-[200px] sm:w-[240px]"
         />
         <p className="mt-1 font-sans text-sm tracking-widest text-brand-slate uppercase">
@@ -201,6 +239,7 @@ function MortgagePricingStep({ onBack }: { onBack: () => void }) {
               alt="IFUND EQUITY"
               width={32}
               height={32}
+              unoptimized
               className="h-8 w-8 object-contain"
             />
             <span className="font-serif text-lg font-bold tracking-wide text-brand-navy">
