@@ -1,5 +1,3 @@
-npm run dev
-// Updated Step 1 — MortgagePricingForm with US Places autocomplete + IFUND brand styles
 'use client';
 
 import React, { useState } from 'react';
