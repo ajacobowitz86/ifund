@@ -4,7 +4,7 @@ import MortgagePricingForm from "@/components/MortgagePricingForm";
 
 export default function Step1Page() {
   return (
-    <div className="min-h-screen bg-[radial-gradient(ellipse_at_top,_#dde5ef_0%,_var(--brand-canvas)_48%,_#e8eef5_100%)]">
+    <div className="min-h-screen bg-brand-canvas text-brand-navy">
       <header className="border-b border-brand-navy/10 bg-brand-white/80 backdrop-blur">
         <div className="mx-auto flex h-14 max-w-5xl items-center justify-between px-4 sm:px-6 lg:px-8">
           <Link href="/" className="flex items-center gap-3">
