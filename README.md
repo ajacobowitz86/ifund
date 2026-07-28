@@ -11,15 +11,19 @@ Next.js app shell for live mortgage broker pricing (purchase, rate/term refinanc
 
 ## Getting started
 
-## Preview Step 1
+## Preview
+
+- Brand landing: [http://localhost:3000](http://localhost:3000)
+- Step 1 loan pricing: [http://localhost:3000/step-1](http://localhost:3000/step-1)
 
 ```bash
+npm install
 cp .env.example .env.local
 # set NEXT_PUBLIC_GOOGLE_MAPS_API_KEY in .env.local
 npm run dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) to preview Step 1 (loan details + US address autocomplete + stub pricing results).
+Open the brand portal, then use **Request Consultation** to continue into Step 1.
 
 ## Environment
 
@@ -45,8 +49,10 @@ src/
   app/
     layout.tsx
     page.tsx
+    step-1/page.tsx
     api/optimal-blue/pricing/route.ts
   components/
+    BrandLayout.tsx
     MortgagePricingForm.tsx
     UsAddressInput.tsx
 ```

@@ -1,21 +1,29 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import { Cormorant_Garamond, IBM_Plex_Sans, IBM_Plex_Mono } from "next/font/google";
 import "./globals.css";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
+const brandSerif = Cormorant_Garamond({
+  variable: "--font-brand-serif",
   subsets: ["latin"],
+  weight: ["500", "600", "700"],
 });
 
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
+const brandSans = IBM_Plex_Sans({
+  variable: "--font-brand-sans",
   subsets: ["latin"],
+  weight: ["400", "500", "600"],
+});
+
+const brandMono = IBM_Plex_Mono({
+  variable: "--font-brand-mono",
+  subsets: ["latin"],
+  weight: ["400", "500"],
 });
 
 export const metadata: Metadata = {
-  title: "ifund | Step 1 — Price Your Loan",
+  title: "IFUND EQUITY",
   description:
-    "Step 1: enter loan details and a US property address to preview broker pricing.",
+    "Institutional growth and real estate. Access automated evaluation pipelines and portfolio management tools.",
 };
 
 export default function RootLayout({
@@ -26,21 +34,9 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
+      className={`${brandSerif.variable} ${brandSans.variable} ${brandMono.variable} h-full antialiased`}
     >
-      <body className="flex min-h-full flex-col bg-[radial-gradient(ellipse_at_top,_#e8eef6_0%,_#f4f7fb_42%,_#edf2f7_100%)] text-slate-900">
-        <header className="border-b border-slate-200/80 bg-white/80 backdrop-blur">
-          <div className="mx-auto flex h-14 max-w-5xl items-center justify-between px-4 sm:px-6 lg:px-8">
-            <span className="text-lg font-bold tracking-tight text-slate-900">
-              ifund
-            </span>
-            <span className="text-sm font-medium text-slate-500">
-              Step 1 of 1 · Loan pricing
-            </span>
-          </div>
-        </header>
-        {children}
-      </body>
+      <body className="min-h-full font-sans text-brand-navy">{children}</body>
     </html>
   );
 }

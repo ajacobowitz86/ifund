@@ -11,7 +11,10 @@ type PricingOption = {
 };
 
 const addressInputClassName =
-  'w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-slate-900 focus:bg-white outline-none transition-all';
+  'w-full rounded-xl border border-brand-navy/15 bg-brand-canvas px-4 py-3 font-sans text-brand-navy outline-none transition-all focus:bg-brand-white focus:ring-2 focus:ring-brand-navy';
+
+const fieldClassName =
+  'w-full rounded-xl border border-brand-navy/15 bg-brand-canvas py-3 font-sans text-brand-navy outline-none transition-all focus:bg-brand-white focus:ring-2 focus:ring-brand-navy';
 
 export default function MortgagePricingForm() {
   const [loanPurpose, setLoanPurpose] = useState<'purchase' | 'rate_term' | 'cash_out'>('purchase');
@@ -48,88 +51,88 @@ export default function MortgagePricingForm() {
 
       const data = await response.json();
       if (!response.ok) throw new Error(data.message || 'Failed to fetch pricing');
-      
+
       setPricingResults(data.options);
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : "Failed to fetch pricing");
+      setError(err instanceof Error ? err.message : 'Failed to fetch pricing');
     } finally {
       setLoading(false);
     }
   };
 
+  const purposeTabClass = (active: boolean) =>
+    `rounded-xl border px-4 py-3 font-sans text-sm font-semibold transition-all ${
+      active
+        ? 'border-brand-navy bg-brand-navy text-brand-white shadow-md'
+        : 'border-brand-navy/15 bg-brand-canvas text-brand-slate hover:bg-brand-white'
+    }`;
+
   return (
-    <div className="mx-auto my-8 max-w-3xl rounded-2xl border border-slate-200/80 bg-white p-6 shadow-sm sm:my-10 sm:p-8">
+    <div className="mx-auto my-8 max-w-3xl rounded-2xl border border-brand-navy/10 bg-brand-white p-6 shadow-md sm:my-10 sm:p-8">
       <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <p className="text-xs font-semibold tracking-[0.14em] text-slate-500 uppercase">
+          <p className="font-sans text-xs font-semibold tracking-[0.14em] text-brand-slate uppercase">
             Loan details
           </p>
-          <h2 className="mt-1 text-2xl font-bold text-slate-900">Price your loan</h2>
+          <h2 className="mt-1 font-serif text-2xl font-bold text-brand-navy">
+            Price your loan
+          </h2>
         </div>
 
         <button
           type="button"
           onClick={() => setIsVaLoan(!isVaLoan)}
-          className={`self-start rounded-lg px-4 py-2 text-sm font-semibold shadow-sm transition-all ${
+          className={`self-start rounded-lg px-4 py-2 font-sans text-sm font-semibold shadow-sm transition-all ${
             isVaLoan
-              ? 'bg-emerald-600 text-white ring-2 ring-emerald-400'
-              : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
+              ? 'bg-brand-champagne text-white ring-2 ring-brand-champagne/40'
+              : 'bg-brand-canvas text-brand-navy hover:bg-brand-navy/5'
           }`}
         >
           {isVaLoan ? '✓ VA Loan Active' : '+ VA Loan'}
         </button>
       </div>
 
-      {/* Loan Purpose Selection Tabs */}
-      <div className="grid grid-cols-3 gap-3 mb-8">
+      <div className="mb-8 grid grid-cols-3 gap-3">
         <button
           type="button"
           onClick={() => setLoanPurpose('purchase')}
-          className={`py-3 px-4 rounded-xl font-semibold text-sm transition-all border ${
-            loanPurpose === 'purchase' 
-              ? 'bg-slate-900 text-white border-slate-900 shadow-md' 
-              : 'bg-slate-50 text-slate-600 border-slate-200 hover:bg-slate-100'
-          }`}
+          className={purposeTabClass(loanPurpose === 'purchase')}
         >
           Purchase
         </button>
         <button
           type="button"
           onClick={() => setLoanPurpose('rate_term')}
-          className={`py-3 px-4 rounded-xl font-semibold text-sm transition-all border ${
-            loanPurpose === 'rate_term' 
-              ? 'bg-slate-900 text-white border-slate-900 shadow-md' 
-              : 'bg-slate-50 text-slate-600 border-slate-200 hover:bg-slate-100'
-          }`}
+          className={purposeTabClass(loanPurpose === 'rate_term')}
         >
           Rate & Term Refi
         </button>
         <button
           type="button"
           onClick={() => setLoanPurpose('cash_out')}
-          className={`py-3 px-4 rounded-xl font-semibold text-sm transition-all border ${
-            loanPurpose === 'cash_out' 
-              ? 'bg-slate-900 text-white border-slate-900 shadow-md' 
-              : 'bg-slate-50 text-slate-600 border-slate-200 hover:bg-slate-100'
-          }`}
+          className={purposeTabClass(loanPurpose === 'cash_out')}
         >
           Cash-Out Refi
         </button>
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-6">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+        <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
           {loanPurpose === 'purchase' && (
             <div>
-              <label className="block text-sm font-semibold text-slate-700 mb-2">Purchase Price</label>
+              <label className="mb-2 block font-sans text-sm font-semibold text-brand-navy">
+                Purchase Price
+              </label>
               <div className="relative">
-                <span className="absolute inset-y-0 left-0 pl-3 flex items-center text-slate-400">$</span>
+                <span className="absolute inset-y-0 left-0 flex items-center pl-3 text-brand-slate">
+                  $
+                </span>
                 <input
                   type="number"
                   value={purchasePrice}
                   onChange={(e) => setPurchasePrice(e.target.value)}
                   required
-                  className="w-full pl-8 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-slate-900 focus:bg-white outline-none transition-all"
+                  className={`${fieldClassName} pl-8 pr-4`}
                   placeholder="500,000"
                 />
               </div>
@@ -137,17 +140,19 @@ export default function MortgagePricingForm() {
           )}
 
           <div>
-            <label className="block text-sm font-semibold text-slate-700 mb-2">
+            <label className="mb-2 block font-sans text-sm font-semibold text-brand-navy">
               {loanPurpose === 'purchase' ? 'Loan Amount' : 'Requested Loan Amount'}
             </label>
             <div className="relative">
-              <span className="absolute inset-y-0 left-0 pl-3 flex items-center text-slate-400">$</span>
+              <span className="absolute inset-y-0 left-0 flex items-center pl-3 text-brand-slate">
+                $
+              </span>
               <input
                 type="number"
                 value={loanAmount}
                 onChange={(e) => setLoanAmount(e.target.value)}
                 required
-                className="w-full pl-8 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-slate-900 focus:bg-white outline-none transition-all"
+                className={`${fieldClassName} pl-8 pr-4`}
                 placeholder="400,000"
               />
             </div>
@@ -155,15 +160,19 @@ export default function MortgagePricingForm() {
 
           {loanPurpose === 'cash_out' && (
             <div>
-              <label className="block text-sm font-semibold text-slate-700 mb-2">Cash-Out Amount Needed</label>
+              <label className="mb-2 block font-sans text-sm font-semibold text-brand-navy">
+                Cash-Out Amount Needed
+              </label>
               <div className="relative">
-                <span className="absolute inset-y-0 left-0 pl-3 flex items-center text-slate-400">$</span>
+                <span className="absolute inset-y-0 left-0 flex items-center pl-3 text-brand-slate">
+                  $
+                </span>
                 <input
                   type="number"
                   value={cashOutAmount}
                   onChange={(e) => setCashOutAmount(e.target.value)}
                   required
-                  className="w-full pl-8 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-slate-900 focus:bg-white outline-none transition-all"
+                  className={`${fieldClassName} pl-8 pr-4`}
                   placeholder="50,000"
                 />
               </div>
@@ -171,7 +180,9 @@ export default function MortgagePricingForm() {
           )}
 
           <div>
-            <label className="block text-sm font-semibold text-slate-700 mb-2">Credit Score</label>
+            <label className="mb-2 block font-sans text-sm font-semibold text-brand-navy">
+              Credit Score
+            </label>
             <input
               type="number"
               value={creditScore}
@@ -179,14 +190,14 @@ export default function MortgagePricingForm() {
               required
               min="300"
               max="850"
-              className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-slate-900 focus:bg-white outline-none transition-all"
+              className={`${fieldClassName} px-4`}
               placeholder="740"
             />
           </div>
         </div>
 
         <div>
-          <label className="block text-sm font-semibold text-slate-700 mb-2">
+          <label className="mb-2 block font-sans text-sm font-semibold text-brand-navy">
             Property Address (United States)
           </label>
           <UsAddressInput
@@ -200,33 +211,47 @@ export default function MortgagePricingForm() {
         <button
           type="submit"
           disabled={loading}
-          className="w-full py-4 bg-slate-900 hover:bg-slate-800 text-white font-bold rounded-xl shadow-lg transition-all"
+          className="w-full rounded-xl bg-brand-champagne py-4 font-sans font-bold text-white shadow transition-all hover:opacity-95 disabled:cursor-not-allowed disabled:opacity-70"
         >
           {loading ? 'Fetching Live Rates...' : 'Calculate Live Pricing'}
         </button>
       </form>
 
       {error && (
-        <div className="mt-6 p-4 bg-red-50 border border-red-200 text-red-700 rounded-xl text-sm">
+        <div className="mt-6 rounded-xl border border-red-200 bg-red-50 p-4 font-sans text-sm text-red-700">
           {error}
         </div>
       )}
 
       {pricingResults.length > 0 && (
-        <div className="mt-10 pt-6 border-t border-slate-100">
-          <h3 className="text-xl font-bold text-slate-900 mb-4">Live Broker Pricing Options</h3>
+        <div className="mt-10 border-t border-brand-navy/10 pt-6">
+          <h3 className="mb-4 font-serif text-xl font-bold text-brand-navy">
+            Live Broker Pricing Options
+          </h3>
           <div className="space-y-4">
             {pricingResults.map((option, index) => (
-              <div key={index} className="p-5 border border-slate-200 rounded-xl bg-slate-50 flex justify-between items-center transition-all hover:border-slate-300">
+              <div
+                key={index}
+                className="flex items-center justify-between rounded-xl border border-brand-navy/10 bg-brand-canvas p-5 transition-all hover:border-brand-navy/25"
+              >
                 <div>
-                  <h4 className="font-bold text-base text-slate-900">{option.productName}</h4>
-                  <p className="text-sm text-slate-500 mt-1">Interest Rate: <span className="font-bold text-blue-600">{option.interestRate}%</span></p>
+                  <h4 className="font-sans text-base font-bold text-brand-navy">
+                    {option.productName}
+                  </h4>
+                  <p className="mt-1 font-sans text-sm text-brand-slate">
+                    Interest Rate:{' '}
+                    <span className="font-bold text-brand-champagne">
+                      {option.interestRate}%
+                    </span>
+                  </p>
                 </div>
                 <div className="text-right">
-                  <p className="text-sm font-semibold text-slate-900">
+                  <p className="font-sans text-sm font-semibold text-brand-navy">
                     ${option.monthlyPayment.toLocaleString('en-US')} /mo
                   </p>
-                  <p className="text-xs text-slate-500 mt-1">APR: {option.apr}%</p>
+                  <p className="mt-1 font-sans text-xs text-brand-slate">
+                    APR: {option.apr}%
+                  </p>
                 </div>
               </div>
             ))}
