@@ -1,10 +1,16 @@
-// components/MortgagePricingForm.tsx
 'use client';
 
 import React, { useState } from 'react';
 import { useLoadScript, Autocomplete } from '@react-google-maps/api';
 
 const libraries: ("places")[] = ["places"];
+
+type PricingOption = {
+  productName: string;
+  interestRate: number;
+  monthlyPayment: number;
+  apr: number;
+};
 
 export default function MortgagePricingForm() {
   const [loanPurpose, setLoanPurpose] = useState<'purchase' | 'rate_term' | 'cash_out'>('purchase');
@@ -16,7 +22,7 @@ export default function MortgagePricingForm() {
   const [isVaLoan, setIsVaLoan] = useState<boolean>(false);
   
   const [autocomplete, setAutocomplete] = useState<google.maps.places.Autocomplete | null>(null);
-  const [pricingResults, setPricingResults] = useState<any[]>([]);
+  const [pricingResults, setPricingResults] = useState<PricingOption[]>([]);
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -62,8 +68,8 @@ export default function MortgagePricingForm() {
       if (!response.ok) throw new Error(data.message || 'Failed to fetch pricing');
       
       setPricingResults(data.options);
-    } catch (err: any) {
-      setError(err.message);
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : "Failed to fetch pricing");
     } finally {
       setLoading(false);
     }
