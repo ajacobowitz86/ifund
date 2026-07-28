@@ -1,9 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import { useLoadScript, Autocomplete } from '@react-google-maps/api';
-
-const libraries: ("places")[] = ["places"];
+import UsAddressInput from '@/components/UsAddressInput';
 
 type PricingOption = {
   productName: string;
@@ -11,6 +9,9 @@ type PricingOption = {
   monthlyPayment: number;
   apr: number;
 };
+
+const addressInputClassName =
+  'w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-slate-900 focus:bg-white outline-none transition-all';
 
 export default function MortgagePricingForm() {
   const [loanPurpose, setLoanPurpose] = useState<'purchase' | 'rate_term' | 'cash_out'>('purchase');
@@ -20,29 +21,10 @@ export default function MortgagePricingForm() {
   const [propertyAddress, setPropertyAddress] = useState<string>('');
   const [cashOutAmount, setCashOutAmount] = useState<string>('');
   const [isVaLoan, setIsVaLoan] = useState<boolean>(false);
-  
-  const [autocomplete, setAutocomplete] = useState<google.maps.places.Autocomplete | null>(null);
+
   const [pricingResults, setPricingResults] = useState<PricingOption[]>([]);
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
-
-  const { isLoaded } = useLoadScript({
-    googleMapsApiKey: process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY || '',
-    libraries,
-  });
-
-  const onLoadAutocomplete = (autoC: google.maps.places.Autocomplete) => {
-    setAutocomplete(autoC);
-  };
-
-  const onPlaceChanged = () => {
-    if (autocomplete !== null) {
-      const place = autocomplete.getPlace();
-      if (place.formatted_address) {
-        setPropertyAddress(place.formatted_address);
-      }
-    }
-  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -200,28 +182,15 @@ export default function MortgagePricingForm() {
         </div>
 
         <div>
-          <label className="block text-sm font-semibold text-slate-700 mb-2">Property Address</label>
-          {isLoaded ? (
-            <Autocomplete onLoad={onLoadAutocomplete} onPlaceChanged={onPlaceChanged}>
-              <input
-                type="text"
-                value={propertyAddress}
-                onChange={(e) => setPropertyAddress(e.target.value)}
-                required
-                className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-slate-900 focus:bg-white outline-none transition-all"
-                placeholder="Enter full street address, city, state, zip"
-              />
-            </Autocomplete>
-          ) : (
-            <input
-              type="text"
-              value={propertyAddress}
-              onChange={(e) => setPropertyAddress(e.target.value)}
-              required
-              className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl outline-none"
-              placeholder="Loading Address Lookup..."
-            />
-          )}
+          <label className="block text-sm font-semibold text-slate-700 mb-2">
+            Property Address (United States)
+          </label>
+          <UsAddressInput
+            value={propertyAddress}
+            onChange={setPropertyAddress}
+            required
+            className={addressInputClassName}
+          />
         </div>
 
         <button

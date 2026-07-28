@@ -23,8 +23,16 @@ Open [http://localhost:3000](http://localhost:3000).
 
 | Variable | Purpose |
 | --- | --- |
-| `NEXT_PUBLIC_GOOGLE_MAPS_API_KEY` | Google Places address autocomplete |
+| `NEXT_PUBLIC_GOOGLE_MAPS_API_KEY` | Google Places US address autocomplete |
 | `OPTIMAL_BLUE_*` | Reserved for live Optimal Blue integration |
+
+### Google Maps (US addresses)
+
+1. Create a Google Cloud project and enable **Places API**.
+2. Create an API key and set it in `.env.local` as `NEXT_PUBLIC_GOOGLE_MAPS_API_KEY`.
+3. Restart `npm run dev`.
+
+The address field uses Places Autocomplete restricted to the United States (`componentRestrictions: { country: 'us' }`) and street addresses only (`types: ['address']`).
 
 Without a Google Maps key, the address field still works as a normal text input.
 
@@ -38,6 +46,7 @@ src/
     api/optimal-blue/pricing/route.ts
   components/
     MortgagePricingForm.tsx
+    UsAddressInput.tsx
 ```
 
 The pricing route currently returns stub options so the UI can be exercised end-to-end before Optimal Blue credentials are wired in.
