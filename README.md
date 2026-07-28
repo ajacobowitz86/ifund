@@ -15,6 +15,7 @@ Next.js app shell for live mortgage broker pricing (purchase, rate/term refinanc
 
 - Brand landing: [http://localhost:3000](http://localhost:3000)
 - Step 1 loan pricing: [http://localhost:3000/step-1](http://localhost:3000/step-1)
+- Complete app (portal + Step 1 in one flow): [http://localhost:3000/complete](http://localhost:3000/complete)
 
 ```bash
 npm install
@@ -45,17 +46,20 @@ Without a Google Maps key, the address field still works as a normal text input.
 ## Project structure
 
 ```
-step 1                              # synced copy of MortgagePricingForm
+complete                              # full app from entire chat (portal + Step 1)
+step 1                                # synced copy of MortgagePricingForm
 src/
   app/
     layout.tsx
-    page.tsx                        # Brand portal (/)
-    step-1/page.tsx                 # Step 1 route
+    page.tsx                          # Brand portal (/)
+    step-1/page.tsx                   # Step 1 route
+    complete/page.tsx                 # Complete combined flow
     api/optimal-blue/pricing/route.ts
   components/
     BrandLayout.tsx
-    MortgagePricingForm.tsx         # canonical Step 1 form
-    UsAddressInput.tsx              # US Places autocomplete
+    MortgagePricingForm.tsx           # canonical Step 1 form
+    UsAddressInput.tsx                # US Places autocomplete
+    IfundCompleteApp.tsx              # complete single-flow app
 public/
   ifund-logo.png
   ifund-mark.png
