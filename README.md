@@ -11,13 +11,15 @@ Next.js app shell for live mortgage broker pricing (purchase, rate/term refinanc
 
 ## Getting started
 
+## Preview Step 1
+
 ```bash
-npm install
 cp .env.example .env.local
+# set NEXT_PUBLIC_GOOGLE_MAPS_API_KEY in .env.local
 npm run dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000).
+Open [http://localhost:3000](http://localhost:3000) to preview Step 1 (loan details + US address autocomplete + stub pricing results).
 
 ## Environment
 

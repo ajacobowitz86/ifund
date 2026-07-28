@@ -58,17 +58,21 @@ export default function MortgagePricingForm() {
   };
 
   return (
-    <div className="max-w-3xl mx-auto p-8 bg-white shadow-xl rounded-2xl border border-slate-100 my-10">
-      <div className="flex justify-between items-center mb-6">
-        <h2 className="text-2xl font-bold text-slate-900">Price Your Loan</h2>
-        
-        {/* VA Loan Toggle Button on the Side */}
+    <div className="mx-auto my-8 max-w-3xl rounded-2xl border border-slate-200/80 bg-white p-6 shadow-sm sm:my-10 sm:p-8">
+      <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+        <div>
+          <p className="text-xs font-semibold tracking-[0.14em] text-slate-500 uppercase">
+            Loan details
+          </p>
+          <h2 className="mt-1 text-2xl font-bold text-slate-900">Price your loan</h2>
+        </div>
+
         <button
           type="button"
           onClick={() => setIsVaLoan(!isVaLoan)}
-          className={`px-4 py-2 rounded-lg font-semibold text-sm transition-all shadow-sm ${
-            isVaLoan 
-              ? 'bg-emerald-600 text-white ring-2 ring-emerald-400' 
+          className={`self-start rounded-lg px-4 py-2 text-sm font-semibold shadow-sm transition-all ${
+            isVaLoan
+              ? 'bg-emerald-600 text-white ring-2 ring-emerald-400'
               : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
           }`}
         >
@@ -219,7 +223,9 @@ export default function MortgagePricingForm() {
                   <p className="text-sm text-slate-500 mt-1">Interest Rate: <span className="font-bold text-blue-600">{option.interestRate}%</span></p>
                 </div>
                 <div className="text-right">
-                  <p className="text-sm font-semibold text-slate-900">${option.monthlyPayment} /mo</p>
+                  <p className="text-sm font-semibold text-slate-900">
+                    ${option.monthlyPayment.toLocaleString('en-US')} /mo
+                  </p>
                   <p className="text-xs text-slate-500 mt-1">APR: {option.apr}%</p>
                 </div>
               </div>
