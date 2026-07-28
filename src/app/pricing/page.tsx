@@ -45,8 +45,8 @@ export default function PricingPage() {
           </h1>
           <p className="mt-3 max-w-2xl font-sans text-base leading-relaxed text-brand-slate">
             Choose your loan path, enter the key numbers, and select a US
-            property address. We’ll return broker options next to today’s live
-            market board.
+            property address. Monthly payments are calculated from the 24-hour
+            PPE rate board shown in the header.
           </p>
         </div>
         <LoanPricingForm />

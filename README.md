@@ -22,12 +22,14 @@ That page loads **`ClientPortal`**, which pulls in the other pieces:
 ```
 src/app/page.tsx                    ← MAIN ENTRY (start here)
  └── components/ClientPortal.tsx    ← home portal + pricing screen
-      ├── LiveMarketBar.tsx         ← navy live rates ticker
-      ├── LoanPricingForm.tsx       ← loan form + results
+      ├── LiveMarketBar.tsx         ← header PPE board (24h cache)
+      ├── LoanPricingForm.tsx       ← built-in monthly payment calculator
       │    └── UsAddressInput.tsx   ← US Google Places address
-      │    └── POST /api/optimal-blue/pricing
+      │    └── GET /api/ppe/rates   ← shared 24h PPE rate board
       └── SiteFooter.tsx            ← footer + disclosures
 
+src/lib/ppe-rates.ts                ← rate types + monthly payment math
+src/lib/ppe-rates-cache.ts          ← server 24h PPE cache
 src/app/layout.tsx                  ← fonts, metadata, global shell
 src/app/globals.css                 ← brand CSS + ticker styles
 src/app/pricing/page.tsx            ← optional direct /pricing route
@@ -35,16 +37,25 @@ public/ifund-logo.png               ← logo lockup
 public/ifund-mark.png               ← icon mark
 ```
 
+## PPE rates + calculator
+
+- Header **Live PPE** ticker loads `GET /api/ppe/rates` (refreshed at most every **24 hours**).
+- The loan calculator uses the same cached board and computes **monthly P&I** locally — it does **not** POST to PPE on every quote.
+- When Optimal Blue credentials are added, wire the vendor board pull inside `src/lib/ppe-rates-cache.ts`.
+
 ## Routes
 
 | URL | File | Purpose |
 | --- | --- | --- |
 | `/` | `src/app/page.tsx` | Main portal experience |
 | `/pricing` | `src/app/pricing/page.tsx` | Direct loan pricing page |
-| `/api/optimal-blue/pricing` | `src/app/api/optimal-blue/pricing/route.ts` | Pricing API (stub) |
+| `/api/ppe/rates` | `src/app/api/ppe/rates/route.ts` | 24h-cached PPE product rates |
 
 ## Environment
 
 | Variable | Purpose |
 | --- | --- |
 | `NEXT_PUBLIC_GOOGLE_MAPS_API_KEY` | US address autocomplete |
+| `OPTIMAL_BLUE_CLIENT_ID` | Optional — PPE board integration |
+| `OPTIMAL_BLUE_CLIENT_SECRET` | Optional — PPE board integration |
+| `OPTIMAL_BLUE_BASE_URL` | Optional — PPE board integration |

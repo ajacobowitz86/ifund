@@ -2,7 +2,7 @@
 
 /**
  * MAIN UI — ClientPortal
- * Composes: LiveMarketBar + SiteFooter + LoanPricingForm (+ UsAddressInput inside the form)
+ * Composes: LiveMarketBar (24h PPE board) + SiteFooter + LoanPricingForm calculator
  */
 
 import Image from 'next/image';
@@ -42,9 +42,8 @@ function HomeScreen({ onContinue }: { onContinue: () => void }) {
             Capital clarity, priced in real time
           </h1>
           <p className="mb-6 font-sans text-sm leading-relaxed text-brand-slate">
-            Track live benchmarks across conventional, government, jumbo, ARM,
-            and non-QM programs—then run a personalized scenario for your
-            purchase or refinance.
+            Review the live PPE product board in the header, then calculate
+            monthly payments from those rates for your purchase or refinance.
           </p>
           <button type="button" onClick={onContinue} className="ifund-cta">
             Begin Loan Evaluation
@@ -116,8 +115,8 @@ function PricingScreen({ onBack }: { onBack: () => void }) {
           </h1>
           <p className="mt-3 max-w-2xl font-sans text-base leading-relaxed text-brand-slate">
             Choose your loan path, enter the key numbers, and select a US
-            property address. We’ll return broker options next to today’s live
-            market board.
+            property address. Monthly payments are calculated from the 24-hour
+            PPE rate board shown in the header.
           </p>
         </div>
 

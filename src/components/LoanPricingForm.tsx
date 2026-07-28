@@ -1,14 +1,12 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import UsAddressInput from '@/components/UsAddressInput';
-
-type PricingOption = {
-  productName: string;
-  interestRate: number;
-  monthlyPayment: number;
-  apr: number;
-};
+import { usePpeRates } from '@/hooks/usePpeRates';
+import {
+  buildCalculatorOptions,
+  type CalculatorOption,
+} from '@/lib/ppe-rates';
 
 const addressInputClassName =
   'w-full rounded-xl border border-brand-navy/15 bg-brand-canvas px-4 py-3 font-sans text-brand-navy outline-none transition-all focus:bg-brand-white focus:ring-2 focus:ring-brand-navy';
@@ -17,7 +15,12 @@ const fieldClassName =
   'w-full rounded-xl border border-brand-navy/15 bg-brand-canvas py-3 font-sans text-brand-navy outline-none transition-all focus:bg-brand-white focus:ring-2 focus:ring-brand-navy';
 
 export default function LoanPricingForm() {
-  const [loanPurpose, setLoanPurpose] = useState<'purchase' | 'rate_term' | 'cash_out'>('purchase');
+  const { products, fetchedAt, loading: ratesLoading, error: ratesError } =
+    usePpeRates();
+
+  const [loanPurpose, setLoanPurpose] = useState<
+    'purchase' | 'rate_term' | 'cash_out'
+  >('purchase');
   const [purchasePrice, setPurchasePrice] = useState<string>('');
   const [loanAmount, setLoanAmount] = useState<string>('');
   const [creditScore, setCreditScore] = useState<string>('');
@@ -25,39 +28,57 @@ export default function LoanPricingForm() {
   const [cashOutAmount, setCashOutAmount] = useState<string>('');
   const [isVaLoan, setIsVaLoan] = useState<boolean>(false);
 
-  const [pricingResults, setPricingResults] = useState<PricingOption[]>([]);
-  const [loading, setLoading] = useState<boolean>(false);
+  const [pricingResults, setPricingResults] = useState<CalculatorOption[]>([]);
   const [error, setError] = useState<string | null>(null);
+  const [hasCalculated, setHasCalculated] = useState(false);
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const boardLabel = useMemo(() => {
+    if (!fetchedAt) return 'PPE board loading…';
+    return `Using PPE board from ${fetchedAt.toLocaleString('en-US', {
+      month: 'short',
+      day: 'numeric',
+      hour: 'numeric',
+      minute: '2-digit',
+    })} (refreshes every 24h)`;
+  }, [fetchedAt]);
+
+  const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    setLoading(true);
     setError(null);
 
-    try {
-      const response = await fetch('/api/optimal-blue/pricing', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          loanPurpose,
-          purchasePrice: purchasePrice ? parseFloat(purchasePrice) : null,
-          loanAmount: parseFloat(loanAmount),
-          creditScore: parseInt(creditScore, 10),
-          propertyAddress,
-          cashOutAmount: cashOutAmount ? parseFloat(cashOutAmount) : 0,
-          isVaLoan,
-        }),
-      });
+    const amount = parseFloat(loanAmount);
+    const score = parseInt(creditScore, 10);
 
-      const data = await response.json();
-      if (!response.ok) throw new Error(data.message || 'Failed to fetch pricing');
-
-      setPricingResults(data.options);
-    } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : 'Failed to fetch pricing');
-    } finally {
-      setLoading(false);
+    if (!Number.isFinite(amount) || amount <= 0) {
+      setError('Enter a valid loan amount.');
+      setPricingResults([]);
+      setHasCalculated(false);
+      return;
     }
+
+    if (!Number.isFinite(score) || score < 300 || score > 850) {
+      setError('Enter a credit score between 300 and 850.');
+      setPricingResults([]);
+      setHasCalculated(false);
+      return;
+    }
+
+    if (products.length === 0) {
+      setError(ratesError || 'PPE rates are not available yet. Try again shortly.');
+      setPricingResults([]);
+      setHasCalculated(false);
+      return;
+    }
+
+    const options = buildCalculatorOptions({
+      products,
+      loanAmount: amount,
+      creditScore: score,
+      isVaLoan,
+    });
+
+    setPricingResults(options);
+    setHasCalculated(true);
   };
 
   const purposeTabClass = (active: boolean) =>
@@ -77,6 +98,7 @@ export default function LoanPricingForm() {
           <h2 className="mt-1 font-serif text-2xl font-bold text-brand-navy">
             Price your loan
           </h2>
+          <p className="mt-2 font-sans text-xs text-brand-slate">{boardLabel}</p>
         </div>
 
         <button
@@ -208,28 +230,37 @@ export default function LoanPricingForm() {
           />
         </div>
 
-        <button type="submit" disabled={loading} className="ifund-cta">
-          {loading
-            ? 'Comparing live investor pricing...'
-            : 'Generate Personalized Options'}
+        <button
+          type="submit"
+          disabled={ratesLoading && products.length === 0}
+          className="ifund-cta"
+        >
+          {ratesLoading && products.length === 0
+            ? 'Loading PPE rates…'
+            : 'Calculate Monthly Payments'}
         </button>
       </form>
 
-      {error && (
+      {(error || ratesError) && (
         <div className="mt-6 rounded-xl border border-red-200 bg-red-50 p-4 font-sans text-sm text-red-700">
-          {error}
+          {error || ratesError}
         </div>
       )}
 
-      {pricingResults.length > 0 && (
+      {hasCalculated && pricingResults.length > 0 && (
         <div className="mt-10 border-t border-brand-navy/10 pt-6">
-          <h3 className="mb-4 font-serif text-xl font-bold text-brand-navy">
-            Live Broker Pricing Options
+          <h3 className="mb-1 font-serif text-xl font-bold text-brand-navy">
+            Monthly payment options
           </h3>
+          <p className="mb-4 font-sans text-xs text-brand-slate">
+            Calculated from the 24-hour PPE rate board — no live PPE post on
+            each quote. Principal &amp; interest only; taxes and insurance not
+            included.
+          </p>
           <div className="space-y-4">
-            {pricingResults.map((option, index) => (
+            {pricingResults.map((option) => (
               <div
-                key={index}
+                key={option.productName}
                 className="flex items-center justify-between rounded-xl border border-brand-navy/10 bg-brand-canvas p-5 transition-all hover:border-brand-navy/25"
               >
                 <div>
@@ -241,14 +272,23 @@ export default function LoanPricingForm() {
                     <span className="font-bold text-brand-champagne">
                       {option.interestRate}%
                     </span>
+                    <span className="text-brand-slate/70">
+                      {' '}
+                      · {option.termMonths / 12}-yr term
+                    </span>
                   </p>
                 </div>
                 <div className="text-right">
                   <p className="font-sans text-sm font-semibold text-brand-navy">
-                    ${option.monthlyPayment.toLocaleString('en-US')} /mo
+                    $
+                    {option.monthlyPayment.toLocaleString('en-US', {
+                      minimumFractionDigits: 2,
+                      maximumFractionDigits: 2,
+                    })}{' '}
+                    /mo
                   </p>
                   <p className="mt-1 font-sans text-xs text-brand-slate">
-                    APR: {option.apr}%
+                    Est. APR: {option.apr}%
                   </p>
                 </div>
               </div>
