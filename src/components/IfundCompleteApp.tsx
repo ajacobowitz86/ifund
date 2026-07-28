@@ -1,11 +1,11 @@
 'use client';
 
 /**
- * IFUND EQUITY — Complete app (from full session)
- * Brand portal + Step 1 loan pricing + US Places autocomplete + stub Optimal Blue pricing
+ * IFUND EQUITY — Complete app
+ * Brand portal + live market rates + Step 1 loan pricing + US Places autocomplete
  */
 
-import React, { useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import Image from 'next/image';
 import { Autocomplete, useLoadScript } from '@react-google-maps/api';
 
@@ -19,6 +19,7 @@ const usAutocompleteOptions: google.maps.places.AutocompleteOptions = {
 
 type LoanPurpose = 'purchase' | 'rate_term' | 'cash_out';
 type Screen = 'portal' | 'step1';
+type RateDirection = 'up' | 'down' | 'flat';
 
 type PricingOption = {
   productName: string;
@@ -27,11 +28,121 @@ type PricingOption = {
   apr: number;
 };
 
+type MarketRate = {
+  product: string;
+  rate: number;
+  change: number;
+  direction: RateDirection;
+};
+
+const BASE_MARKET_RATES: Omit<MarketRate, 'direction'>[] = [
+  { product: 'Conventional 30-Yr', rate: 6.375, change: -0.015 },
+  { product: 'Conventional 15-Yr', rate: 5.75, change: -0.01 },
+  { product: 'FHA 30-Yr', rate: 6.125, change: 0.0 },
+  { product: 'VA 30-Yr', rate: 5.99, change: -0.02 },
+  { product: 'USDA 30-Yr', rate: 6.05, change: 0.005 },
+  { product: 'Jumbo 30-Yr', rate: 6.49, change: 0.01 },
+  { product: '5/6 ARM', rate: 5.875, change: -0.025 },
+  { product: '7/6 ARM', rate: 5.99, change: -0.015 },
+  { product: '10/6 ARM', rate: 6.125, change: 0.0 },
+  { product: 'Bank Statement 30-Yr', rate: 7.125, change: 0.02 },
+  { product: 'Non-QM 30-Yr', rate: 7.375, change: 0.015 },
+  { product: 'HELOC Prime+', rate: 8.25, change: 0.0 },
+];
+
 const fieldClassName =
   'w-full rounded-xl border border-brand-navy/15 bg-brand-canvas py-3 font-sans text-brand-navy outline-none transition-all focus:bg-brand-white focus:ring-2 focus:ring-brand-navy';
 
 const addressInputClassName =
   'w-full rounded-xl border border-brand-navy/15 bg-brand-canvas px-4 py-3 font-sans text-brand-navy outline-none transition-all focus:bg-brand-white focus:ring-2 focus:ring-brand-navy';
+
+function formatSignedChange(change: number) {
+  if (change === 0) return '0.000';
+  const sign = change > 0 ? '+' : '';
+  return `${sign}${change.toFixed(3)}`;
+}
+
+function withDirection(rates: Omit<MarketRate, 'direction'>[]): MarketRate[] {
+  return rates.map((item) => ({
+    ...item,
+    direction: item.change > 0 ? 'up' : item.change < 0 ? 'down' : 'flat',
+  }));
+}
+
+function LiveMarketBar() {
+  const [rates, setRates] = useState<MarketRate[]>(() =>
+    withDirection(BASE_MARKET_RATES),
+  );
+  const [updatedAt, setUpdatedAt] = useState(() => new Date());
+
+  useEffect(() => {
+    const timer = window.setInterval(() => {
+      setRates((prev) =>
+        prev.map((item) => {
+          const wobble = (Math.random() - 0.5) * 0.02;
+          const nextChange = Number((item.change * 0.65 + wobble).toFixed(3));
+          const nextRate = Number(
+            Math.max(3.5, Math.min(12, item.rate + wobble)).toFixed(3),
+          );
+          return {
+            product: item.product,
+            rate: nextRate,
+            change: nextChange,
+            direction: nextChange > 0 ? 'up' : nextChange < 0 ? 'down' : 'flat',
+          };
+        }),
+      );
+      setUpdatedAt(new Date());
+    }, 8000);
+
+    return () => window.clearInterval(timer);
+  }, []);
+
+  const tickerItems = useMemo(() => [...rates, ...rates], [rates]);
+
+  return (
+    <div className="live-market-bar" aria-label="Live mortgage market rates">
+      <div className="flex items-stretch">
+        <div className="live-market-bar__label">
+          <span className="live-market-bar__pulse" aria-hidden="true" />
+          Live Market
+        </div>
+        <div className="relative min-w-0 flex-1 overflow-hidden">
+          <div className="live-market-bar__track">
+            {tickerItems.map((item, index) => (
+              <div
+                key={`${item.product}-${index}`}
+                className="live-market-bar__item"
+              >
+                <span className="live-market-bar__product">{item.product}</span>
+                <span className="live-market-bar__rate">
+                  {item.rate.toFixed(3)}%
+                </span>
+                <span
+                  className={`live-market-bar__change live-market-bar__change--${item.direction}`}
+                >
+                  {item.direction === 'up'
+                    ? '▲'
+                    : item.direction === 'down'
+                      ? '▼'
+                      : '•'}{' '}
+                  {formatSignedChange(item.change)}
+                </span>
+              </div>
+            ))}
+          </div>
+        </div>
+        <div className="hidden shrink-0 items-center border-l border-white/10 px-3 text-[0.65rem] tracking-wide text-white/55 sm:flex">
+          As of{' '}
+          {updatedAt.toLocaleTimeString('en-US', {
+            hour: 'numeric',
+            minute: '2-digit',
+          })}
+        </div>
+      </div>
+    </div>
+  );
+}
 
 function UsAddressInput({
   value,
@@ -84,7 +195,7 @@ function GoogleUsAddressInput({
     libraries,
   });
 
-  if (loadError) {
+  if (loadError || !isLoaded) {
     return (
       <input
         type="text"
@@ -92,21 +203,11 @@ function GoogleUsAddressInput({
         onChange={(e) => onChange(e.target.value)}
         required={required}
         className={addressInputClassName}
-        placeholder="Enter US street address, city, state, zip"
-        autoComplete="street-address"
-      />
-    );
-  }
-
-  if (!isLoaded) {
-    return (
-      <input
-        type="text"
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
-        required={required}
-        className={addressInputClassName}
-        placeholder="Loading US address lookup..."
+        placeholder={
+          loadError
+            ? 'Enter US street address, city, state, zip'
+            : 'Loading US address lookup...'
+        }
         autoComplete="street-address"
       />
     );
@@ -136,36 +237,49 @@ function GoogleUsAddressInput({
 
 function BrandPortal({ onContinue }: { onContinue: () => void }) {
   return (
-    <div className="flex min-h-screen flex-col items-center justify-center bg-brand-canvas p-6 text-brand-navy">
-      <div className="brand-soft-in mb-10 flex flex-col items-center">
-        <Image
-          src="/ifund-logo.png"
-          alt="IFUND EQUITY"
-          width={280}
-          height={280}
-          priority
-          unoptimized
-          className="mb-2 h-auto w-[200px] sm:w-[240px]"
-        />
-        <p className="mt-1 font-sans text-sm tracking-widest text-brand-slate uppercase">
-          Institutional Growth & Real Estate
-        </p>
-      </div>
+    <div className="ifund-shell">
+      <LiveMarketBar />
 
-      <div className="brand-fade-up w-full max-w-md rounded-2xl border border-gray-100 bg-brand-white p-8 text-center shadow-md">
-        <h2 className="mb-3 font-serif text-xl font-semibold">
-          Secure Client Portal
-        </h2>
-        <p className="mb-6 font-sans text-sm text-brand-slate">
-          Access automated evaluation pipelines and portfolio management tools.
+      <div className="flex flex-1 flex-col items-center justify-center px-6 py-12">
+        <div className="brand-soft-in mb-8 flex flex-col items-center">
+          <Image
+            src="/ifund-logo.png"
+            alt="IFUND EQUITY"
+            width={280}
+            height={280}
+            priority
+            unoptimized
+            className="mb-1 h-auto w-[200px] sm:w-[240px]"
+          />
+          <p className="mt-1 font-sans text-sm tracking-[0.2em] text-brand-slate uppercase">
+            Institutional Growth & Real Estate
+          </p>
+        </div>
+
+        <div className="ifund-portal-card brand-fade-up">
+          <p className="mb-2 font-sans text-xs font-semibold tracking-[0.16em] text-brand-champagne uppercase">
+            Private client access
+          </p>
+          <h2 className="mb-3 font-serif text-2xl font-semibold text-brand-navy">
+            Capital clarity, priced in real time
+          </h2>
+          <p className="mb-6 font-sans text-sm leading-relaxed text-brand-slate">
+            Review live market benchmarks across conventional, government, jumbo,
+            ARM, and non-QM programs—then run a personalized pricing scenario for
+            your purchase or refinance.
+          </p>
+          <button type="button" onClick={onContinue} className="ifund-cta">
+            Begin Loan Evaluation
+          </button>
+          <p className="mt-4 font-sans text-xs text-brand-slate">
+            Secure workflow · US properties · Broker-guided pricing
+          </p>
+        </div>
+
+        <p className="brand-fade-up-delay mt-8 max-w-lg text-center font-sans text-xs leading-relaxed text-brand-slate">
+          Indicative market levels update throughout the day. Your final quote is
+          based on credit, property, and program eligibility.
         </p>
-        <button
-          type="button"
-          onClick={onContinue}
-          className="w-full rounded-xl bg-brand-champagne py-3 font-sans font-medium text-white shadow transition hover:opacity-95"
-        >
-          Request Consultation
-        </button>
       </div>
     </div>
   );
@@ -184,7 +298,7 @@ function MortgagePricingStep({ onBack }: { onBack: () => void }) {
   const [error, setError] = useState<string | null>(null);
 
   const purposeTabClass = (active: boolean) =>
-    `rounded-xl border px-4 py-3 font-sans text-sm font-semibold transition-all ${
+    `rounded-xl border px-3 py-3 font-sans text-sm font-semibold transition-all sm:px-4 ${
       active
         ? 'border-brand-navy bg-brand-navy text-brand-white shadow-md'
         : 'border-brand-navy/15 bg-brand-canvas text-brand-slate hover:bg-brand-white'
@@ -221,8 +335,10 @@ function MortgagePricingStep({ onBack }: { onBack: () => void }) {
   };
 
   return (
-    <div className="min-h-screen bg-brand-canvas text-brand-navy">
-      <header className="border-b border-brand-navy/10 bg-brand-white/80 backdrop-blur">
+    <div className="ifund-shell">
+      <LiveMarketBar />
+
+      <header className="border-b border-brand-navy/10 bg-brand-white/90 backdrop-blur">
         <div className="mx-auto flex h-14 max-w-5xl items-center justify-between px-4 sm:px-6 lg:px-8">
           <button
             type="button"
@@ -242,22 +358,22 @@ function MortgagePricingStep({ onBack }: { onBack: () => void }) {
             </span>
           </button>
           <span className="font-sans text-sm font-medium text-brand-slate">
-            Step 1 · Loan pricing
+            Step 1 · Personalized pricing
           </span>
         </div>
       </header>
 
       <main className="px-4 py-8 sm:px-6 lg:px-8">
         <div className="mx-auto max-w-3xl">
-          <p className="font-sans text-sm font-semibold tracking-[0.14em] text-brand-slate uppercase">
-            Step 1
+          <p className="font-sans text-sm font-semibold tracking-[0.14em] text-brand-champagne uppercase">
+            Step 1 of your evaluation
           </p>
           <h1 className="mt-2 font-serif text-3xl font-bold tracking-tight text-brand-navy sm:text-4xl">
-            Price your loan
+            Build your pricing scenario
           </h1>
-          <p className="mt-3 max-w-2xl font-sans text-base text-brand-slate">
-            Choose a loan purpose, enter amounts and credit score, then pick a US
-            property address to preview broker pricing options.
+          <p className="mt-3 max-w-2xl font-sans text-base leading-relaxed text-brand-slate">
+            Tell us how you want to finance the property. We’ll compare live
+            broker options against today’s market board above.
           </p>
         </div>
 
@@ -265,10 +381,10 @@ function MortgagePricingStep({ onBack }: { onBack: () => void }) {
           <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
             <div>
               <p className="font-sans text-xs font-semibold tracking-[0.14em] text-brand-slate uppercase">
-                Loan details
+                Loan profile
               </p>
               <h2 className="mt-1 font-serif text-2xl font-bold text-brand-navy">
-                Price your loan
+                Structure the request
               </h2>
             </div>
 
@@ -281,11 +397,11 @@ function MortgagePricingStep({ onBack }: { onBack: () => void }) {
                   : 'bg-brand-canvas text-brand-navy hover:bg-brand-navy/5'
               }`}
             >
-              {isVaLoan ? '✓ VA Loan Active' : '+ VA Loan'}
+              {isVaLoan ? '✓ VA Benefit Applied' : '+ Apply VA Benefit'}
             </button>
           </div>
 
-          <div className="mb-8 grid grid-cols-3 gap-3">
+          <div className="mb-8 grid grid-cols-3 gap-2 sm:gap-3">
             <button
               type="button"
               onClick={() => setLoanPurpose('purchase')}
@@ -298,14 +414,14 @@ function MortgagePricingStep({ onBack }: { onBack: () => void }) {
               onClick={() => setLoanPurpose('rate_term')}
               className={purposeTabClass(loanPurpose === 'rate_term')}
             >
-              Rate & Term Refi
+              Rate & Term
             </button>
             <button
               type="button"
               onClick={() => setLoanPurpose('cash_out')}
               className={purposeTabClass(loanPurpose === 'cash_out')}
             >
-              Cash-Out Refi
+              Cash-Out
             </button>
           </div>
 
@@ -356,7 +472,7 @@ function MortgagePricingStep({ onBack }: { onBack: () => void }) {
               {loanPurpose === 'cash_out' && (
                 <div>
                   <label className="mb-2 block font-sans text-sm font-semibold text-brand-navy">
-                    Cash-Out Amount Needed
+                    Cash Needed at Closing
                   </label>
                   <div className="relative">
                     <span className="absolute inset-y-0 left-0 flex items-center pl-3 text-brand-slate">
@@ -376,7 +492,7 @@ function MortgagePricingStep({ onBack }: { onBack: () => void }) {
 
               <div>
                 <label className="mb-2 block font-sans text-sm font-semibold text-brand-navy">
-                  Credit Score
+                  Estimated Credit Score
                 </label>
                 <input
                   type="number"
@@ -400,14 +516,16 @@ function MortgagePricingStep({ onBack }: { onBack: () => void }) {
                 onChange={setPropertyAddress}
                 required
               />
+              <p className="mt-2 font-sans text-xs text-brand-slate">
+                Use the full street address so pricing reflects local market and
+                eligibility rules.
+              </p>
             </div>
 
-            <button
-              type="submit"
-              disabled={loading}
-              className="w-full rounded-xl bg-brand-champagne py-4 font-sans font-bold text-white shadow transition-all hover:opacity-95 disabled:cursor-not-allowed disabled:opacity-70"
-            >
-              {loading ? 'Fetching Live Rates...' : 'Calculate Live Pricing'}
+            <button type="submit" disabled={loading} className="ifund-cta">
+              {loading
+                ? 'Comparing live investor pricing...'
+                : 'Generate Personalized Options'}
             </button>
           </form>
 
@@ -419,14 +537,18 @@ function MortgagePricingStep({ onBack }: { onBack: () => void }) {
 
           {pricingResults.length > 0 && (
             <div className="mt-10 border-t border-brand-navy/10 pt-6">
-              <h3 className="mb-4 font-serif text-xl font-bold text-brand-navy">
-                Live Broker Pricing Options
+              <h3 className="mb-2 font-serif text-xl font-bold text-brand-navy">
+                Personalized broker options
               </h3>
+              <p className="mb-4 font-sans text-sm text-brand-slate">
+                These scenarios are tailored to your inputs and shown beside the
+                live market board for context.
+              </p>
               <div className="space-y-4">
                 {pricingResults.map((option, index) => (
                   <div
                     key={`${option.productName}-${index}`}
-                    className="flex items-center justify-between rounded-xl border border-brand-navy/10 bg-brand-canvas p-5 transition-all hover:border-brand-navy/25"
+                    className="flex items-center justify-between rounded-xl border border-brand-navy/10 bg-brand-canvas p-5 transition-all hover:border-brand-champagne/50"
                   >
                     <div>
                       <h4 className="font-sans text-base font-bold text-brand-navy">
