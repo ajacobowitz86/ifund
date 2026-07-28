@@ -21,9 +21,23 @@ const brandMono = IBM_Plex_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "IFUND EQUITY",
+  title: {
+    default: "IFUND EQUITY | Live Mortgage Pricing",
+    template: "%s | IFUND EQUITY",
+  },
   description:
-    "Institutional growth and real estate. Access automated evaluation pipelines and portfolio management tools.",
+    "IFUND EQUITY client portal with live market rates and personalized loan pricing for purchase, refinance, and cash-out.",
+  icons: {
+    icon: "/ifund-mark.png",
+    apple: "/ifund-mark.png",
+  },
+  openGraph: {
+    title: "IFUND EQUITY | Live Mortgage Pricing",
+    description:
+      "Track live market benchmarks and run personalized US loan pricing scenarios.",
+    siteName: "IFUND EQUITY",
+    type: "website",
+  },
 };
 
 export default function RootLayout({
@@ -36,7 +50,9 @@ export default function RootLayout({
       lang="en"
       className={`${brandSerif.variable} ${brandSans.variable} ${brandMono.variable} h-full antialiased`}
     >
-      <body className="min-h-full font-sans text-brand-navy">{children}</body>
+      <body className="min-h-full font-sans text-brand-navy antialiased">
+        {children}
+      </body>
     </html>
   );
 }

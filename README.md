@@ -1,69 +1,51 @@
 # ifund
 
-Next.js app shell for live mortgage broker pricing (purchase, rate/term refinance, and cash-out refinance).
+IFUND EQUITY client portal — live market rates and personalized US mortgage pricing.
 
-## Stack
-
-- Next.js (App Router) + TypeScript
-- Tailwind CSS
-- Google Places autocomplete (`@react-google-maps/api`)
-- Optimal Blue pricing API route stub at `/api/optimal-blue/pricing`
-
-## Getting started
-
-## Preview
+## Preview like a real website
 
 ```bash
 npm install
-cp .env.example .env.local   # add NEXT_PUBLIC_GOOGLE_MAPS_API_KEY
+cp .env.example .env.local
+# set NEXT_PUBLIC_GOOGLE_MAPS_API_KEY=your_key
 npm run preview
 ```
 
-Then open **http://localhost:3000** — the complete IFUND EQUITY flow loads by default (brand portal → Step 1 pricing).
+Open **http://localhost:3000**
 
-Other routes:
-- `/complete` — same complete flow
-- `/step-1` — Step 1 form only
+You should see:
+1. Navy **Live Market** ticker (conventional, FHA, VA, jumbo, ARM, non-QM, HELOC)
+2. IFUND EQUITY logo + portal
+3. **Begin Loan Evaluation** → Step 1 pricing form
+4. US address autocomplete + personalized rate options
+5. Professional footer / disclosures
 
-The root `complete` file is a reference copy. It is not opened directly; preview through Next.js with `npm run preview`.
+## Routes
+
+| URL | Experience |
+| --- | --- |
+| `/` | Full portal → Step 1 flow |
+| `/step-1` | Direct Step 1 pricing page |
+| `/complete` | Redirects to `/` |
 
 ## Environment
 
 | Variable | Purpose |
 | --- | --- |
 | `NEXT_PUBLIC_GOOGLE_MAPS_API_KEY` | Google Places US address autocomplete |
-| `OPTIMAL_BLUE_*` | Reserved for live Optimal Blue integration |
 
-### Google Maps (US addresses)
-
-1. Create a Google Cloud project and enable **Places API**.
-2. Create an API key and set it in `.env.local` as `NEXT_PUBLIC_GOOGLE_MAPS_API_KEY`.
-3. Restart `npm run dev`.
-
-The address field uses Places Autocomplete restricted to the United States (`componentRestrictions: { country: 'us' }`) and street addresses only (`types: ['address']`).
-
-Without a Google Maps key, the address field still works as a normal text input.
+Without a Maps key, the address field still works as plain text.
 
 ## Project structure
 
 ```
-complete                              # full app from entire chat (portal + Step 1)
-step 1                                # synced copy of MortgagePricingForm
-src/
-  app/
-    layout.tsx
-    page.tsx                          # Brand portal (/)
-    step-1/page.tsx                   # Step 1 route
-    complete/page.tsx                 # Complete combined flow
-    api/optimal-blue/pricing/route.ts
-  components/
-    BrandLayout.tsx
-    MortgagePricingForm.tsx           # canonical Step 1 form
-    UsAddressInput.tsx                # US Places autocomplete
-    IfundCompleteApp.tsx              # complete single-flow app
-public/
-  ifund-logo.png
-  ifund-mark.png
+complete                         # reference copy of the complete app
+src/app/page.tsx                 # main website entry
+src/components/IfundCompleteApp.tsx
+src/components/LiveMarketBar.tsx
+src/components/SiteFooter.tsx
+src/components/MortgagePricingForm.tsx
+src/components/UsAddressInput.tsx
+public/ifund-logo.png
+public/ifund-mark.png
 ```
-
-The pricing route currently returns stub options so the UI can be exercised end-to-end before Optimal Blue credentials are wired in.
