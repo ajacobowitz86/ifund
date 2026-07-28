@@ -45,16 +45,20 @@ Without a Google Maps key, the address field still works as a normal text input.
 ## Project structure
 
 ```
+step 1                              # synced copy of MortgagePricingForm
 src/
   app/
     layout.tsx
-    page.tsx
-    step-1/page.tsx
+    page.tsx                        # Brand portal (/)
+    step-1/page.tsx                 # Step 1 route
     api/optimal-blue/pricing/route.ts
   components/
     BrandLayout.tsx
-    MortgagePricingForm.tsx
-    UsAddressInput.tsx
+    MortgagePricingForm.tsx         # canonical Step 1 form
+    UsAddressInput.tsx              # US Places autocomplete
+public/
+  ifund-logo.png
+  ifund-mark.png
 ```
 
 The pricing route currently returns stub options so the UI can be exercised end-to-end before Optimal Blue credentials are wired in.
