@@ -1,9 +1,11 @@
-import IfundCompleteApp from "@/components/IfundCompleteApp";
+import ClientPortal from "@/components/ClientPortal";
 
 /**
- * Default preview entry — full IFUND EQUITY flow:
- * brand portal → Step 1 loan pricing → US address → stub rates
+ * MAIN ENTRY
+ * src/app/page.tsx → ClientPortal
+ * ClientPortal uses LiveMarketBar, LoanPricingForm, SiteFooter
+ * LoanPricingForm uses UsAddressInput + /api/optimal-blue/pricing
  */
-export default function Home() {
-  return <IfundCompleteApp />;
+export default function HomePage() {
+  return <ClientPortal />;
 }

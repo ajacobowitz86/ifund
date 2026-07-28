@@ -1,14 +1,14 @@
 import Image from "next/image";
 import Link from "next/link";
 import LiveMarketBar from "@/components/LiveMarketBar";
-import MortgagePricingForm from "@/components/MortgagePricingForm";
+import LoanPricingForm from "@/components/LoanPricingForm";
 import SiteFooter from "@/components/SiteFooter";
 
 export const metadata = {
-  title: "Step 1 · Loan Evaluation",
+  title: "Loan Pricing",
 };
 
-export default function Step1Page() {
+export default function PricingPage() {
   return (
     <div className="ifund-shell">
       <LiveMarketBar />
@@ -30,7 +30,7 @@ export default function Step1Page() {
             </span>
           </Link>
           <span className="rounded-full bg-brand-navy px-3 py-1 font-sans text-xs font-semibold text-white">
-            Step 1 · Loan evaluation
+            Loan pricing
           </span>
         </div>
       </header>
@@ -49,7 +49,7 @@ export default function Step1Page() {
             market board.
           </p>
         </div>
-        <MortgagePricingForm />
+        <LoanPricingForm />
       </main>
 
       <SiteFooter />

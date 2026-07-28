@@ -16,7 +16,7 @@ const addressInputClassName =
 const fieldClassName =
   'w-full rounded-xl border border-brand-navy/15 bg-brand-canvas py-3 font-sans text-brand-navy outline-none transition-all focus:bg-brand-white focus:ring-2 focus:ring-brand-navy';
 
-export default function MortgagePricingForm() {
+export default function LoanPricingForm() {
   const [loanPurpose, setLoanPurpose] = useState<'purchase' | 'rate_term' | 'cash_out'>('purchase');
   const [purchasePrice, setPurchasePrice] = useState<string>('');
   const [loanAmount, setLoanAmount] = useState<string>('');
@@ -208,12 +208,10 @@ export default function MortgagePricingForm() {
           />
         </div>
 
-        <button
-          type="submit"
-          disabled={loading}
-          className="w-full rounded-xl bg-brand-champagne py-4 font-sans font-bold text-white shadow transition-all hover:opacity-95 disabled:cursor-not-allowed disabled:opacity-70"
-        >
-          {loading ? 'Fetching Live Rates...' : 'Calculate Live Pricing'}
+        <button type="submit" disabled={loading} className="ifund-cta">
+          {loading
+            ? 'Comparing live investor pricing...'
+            : 'Generate Personalized Options'}
         </button>
       </form>
 
