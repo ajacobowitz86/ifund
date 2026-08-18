@@ -11,19 +11,17 @@ export const metadata = {
 export default function PricingPage() {
   return (
     <div className="ifund-shell">
-      <LiveMarketBar />
-
-      <header className="sticky top-0 z-20 border-b border-brand-navy/10 bg-brand-white/95 backdrop-blur">
-        <div className="mx-auto flex h-14 max-w-5xl items-center justify-between px-4 sm:px-6 lg:px-8">
+      <header className="border-b border-brand-navy/10 bg-brand-white">
+        <div className="ifund-page flex items-center justify-between gap-4 py-4">
           <Link href="/" className="flex items-center gap-3 transition hover:opacity-80">
             <Image
-              src="/ifund-mark.png"
+              src="/ifund-house-mark.png"
               alt="IFUND EQUITY"
-              width={32}
-              height={32}
+              width={662}
+              height={614}
               priority
               unoptimized
-              className="h-8 w-8 object-contain"
+              className="h-12 w-auto object-contain"
             />
             <span className="font-serif text-lg font-bold tracking-wide text-brand-navy">
               IFUND EQUITY
@@ -35,21 +33,25 @@ export default function PricingPage() {
         </div>
       </header>
 
-      <main className="px-4 py-8 sm:px-6 lg:px-8">
-        <div className="mx-auto max-w-3xl">
-          <p className="font-sans text-sm font-semibold tracking-[0.14em] text-brand-champagne uppercase">
-            Personalized pricing
-          </p>
-          <h1 className="mt-2 font-serif text-3xl font-bold tracking-tight text-brand-navy sm:text-4xl">
-            Build your pricing scenario
-          </h1>
-          <p className="mt-3 max-w-2xl font-sans text-base leading-relaxed text-brand-slate">
-            Choose your loan path, enter the key numbers, and select a US
-            property address. Monthly payments are calculated from the 24-hour
-            PPE rate board shown in the header.
-          </p>
+      <LiveMarketBar />
+
+      <main className="px-0 py-8 sm:py-12">
+        <div className="ifund-page grid items-start gap-8 xl:grid-cols-[minmax(18rem,0.86fr)_minmax(0,1.5fr)] xl:gap-12">
+          <div>
+            <p className="font-sans text-sm font-semibold tracking-[0.14em] text-brand-champagne uppercase">
+              Personalized pricing
+            </p>
+            <h1 className="mt-2 font-serif text-3xl font-bold tracking-tight text-brand-navy sm:text-4xl">
+              Build your pricing scenario
+            </h1>
+            <p className="mt-3 max-w-xl font-sans text-base leading-relaxed text-brand-slate">
+              Choose your loan path, enter the key numbers, and select a US
+              property address. Monthly payments are calculated from the 24-hour
+              rate board shown in the header.
+            </p>
+          </div>
+          <LoanPricingForm />
         </div>
-        <LoanPricingForm />
       </main>
 
       <SiteFooter />

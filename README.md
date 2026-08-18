@@ -55,7 +55,7 @@ public/ifund-mark.png               ← icon mark
 
 | Variable | Purpose |
 | --- | --- |
-| `NEXT_PUBLIC_GOOGLE_MAPS_API_KEY` | US address autocomplete |
+| `NEXT_PUBLIC_GOOGLE_MAPS_API_KEY` | Address autocomplete (Maps JavaScript API + Places API New; NY, NJ, PA, CT, FL) |
 | `OPTIMAL_BLUE_CLIENT_ID` | Optional — PPE board integration |
 | `OPTIMAL_BLUE_CLIENT_SECRET` | Optional — PPE board integration |
 | `OPTIMAL_BLUE_BASE_URL` | Optional — PPE board integration |

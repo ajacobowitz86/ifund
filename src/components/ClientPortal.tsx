@@ -6,134 +6,97 @@
  */
 
 import Image from 'next/image';
-import { useState } from 'react';
 import LiveMarketBar from '@/components/LiveMarketBar';
 import LoanPricingForm from '@/components/LoanPricingForm';
 import SiteFooter from '@/components/SiteFooter';
 
-type Screen = 'home' | 'pricing';
-
-function HomeScreen({ onContinue }: { onContinue: () => void }) {
+export default function ClientPortal() {
   return (
     <div className="ifund-shell">
-      <LiveMarketBar />
-
-      <div className="flex flex-1 flex-col items-center justify-center px-6 py-12 sm:py-16">
-        <div className="brand-soft-in mb-8 flex flex-col items-center">
-          <Image
-            src="/ifund-logo.png"
-            alt="IFUND EQUITY"
-            width={280}
-            height={280}
-            priority
-            unoptimized
-            className="mb-1 h-auto w-[190px] sm:w-[230px]"
-          />
-          <p className="mt-1 font-sans text-sm tracking-[0.2em] text-brand-slate uppercase">
-            Institutional Growth & Real Estate
-          </p>
-        </div>
-
-        <div className="ifund-portal-card brand-fade-up">
-          <p className="mb-2 font-sans text-xs font-semibold tracking-[0.16em] text-brand-champagne uppercase">
-            Secure client portal
-          </p>
-          <h1 className="mb-3 font-serif text-2xl font-semibold text-brand-navy sm:text-[1.75rem]">
-            Capital clarity, priced in real time
-          </h1>
-          <p className="mb-6 font-sans text-sm leading-relaxed text-brand-slate">
-            Review the live PPE product board in the header, then calculate
-            monthly payments from those rates for your purchase or refinance.
-          </p>
-          <button type="button" onClick={onContinue} className="ifund-cta">
-            Begin Loan Evaluation
-          </button>
-          <div className="mt-5 grid grid-cols-3 gap-2 border-t border-brand-navy/8 pt-4 text-center">
-            <div>
-              <p className="font-serif text-base font-semibold text-brand-navy">Live</p>
-              <p className="font-sans text-[0.65rem] text-brand-slate">Market board</p>
-            </div>
-            <div>
-              <p className="font-serif text-base font-semibold text-brand-navy">US</p>
-              <p className="font-sans text-[0.65rem] text-brand-slate">Address lookup</p>
-            </div>
-            <div>
-              <p className="font-serif text-base font-semibold text-brand-navy">VA</p>
-              <p className="font-sans text-[0.65rem] text-brand-slate">Benefit ready</p>
+      <header className="border-b border-brand-navy/10 bg-brand-white">
+        <div className="ifund-page flex items-center justify-between gap-4 py-4">
+          <div className="flex min-w-0 items-center gap-3 sm:gap-4">
+            <Image
+              src="/ifund-house-mark.png"
+              alt=""
+              width={662}
+              height={614}
+              priority
+              unoptimized
+              className="h-16 w-auto shrink-0 object-contain sm:h-20"
+            />
+            <div className="min-w-0">
+              <p className="font-serif text-lg font-bold tracking-[0.12em] text-brand-navy sm:text-2xl">
+                IFUND EQUITY
+              </p>
+              <p className="mt-1 hidden font-sans text-[0.65rem] tracking-[0.14em] text-brand-slate uppercase sm:block">
+                Institutional Growth &amp; Real Estate
+              </p>
             </div>
           </div>
-        </div>
 
-        <p className="brand-fade-up-delay mt-8 max-w-lg text-center font-sans text-xs leading-relaxed text-brand-slate">
-          Indicative levels update throughout the day. Your final quote depends
-          on credit, property, and program eligibility.
-        </p>
-      </div>
-
-      <SiteFooter />
-    </div>
-  );
-}
-
-function PricingScreen({ onBack }: { onBack: () => void }) {
-  return (
-    <div className="ifund-shell">
-      <LiveMarketBar />
-
-      <header className="sticky top-0 z-20 border-b border-brand-navy/10 bg-brand-white/95 backdrop-blur">
-        <div className="mx-auto flex h-14 max-w-5xl items-center justify-between px-4 sm:px-6 lg:px-8">
-          <button
-            type="button"
-            onClick={onBack}
-            className="flex items-center gap-3 transition hover:opacity-80"
+          <a
+            href="mailto:consult@ifundequity.com?subject=IFUND%20Loan%20Pricing"
+            className="ifund-chat-button"
           >
-            <Image
-              src="/ifund-mark.png"
-              alt="IFUND EQUITY"
-              width={32}
-              height={32}
-              unoptimized
-              className="h-8 w-8 object-contain"
-            />
-            <span className="font-serif text-lg font-bold tracking-wide text-brand-navy">
-              IFUND EQUITY
-            </span>
-          </button>
-          <span className="rounded-full bg-brand-navy px-3 py-1 font-sans text-xs font-semibold text-white">
-            Loan evaluation
-          </span>
+            Chat with us
+          </a>
         </div>
       </header>
 
-      <main className="px-4 py-8 sm:px-6 lg:px-8">
-        <div className="mx-auto max-w-3xl">
-          <p className="font-sans text-sm font-semibold tracking-[0.14em] text-brand-champagne uppercase">
-            Personalized pricing
-          </p>
-          <h1 className="mt-2 font-serif text-3xl font-bold tracking-tight text-brand-navy sm:text-4xl">
-            Build your pricing scenario
-          </h1>
-          <p className="mt-3 max-w-2xl font-sans text-base leading-relaxed text-brand-slate">
-            Choose your loan path, enter the key numbers, and select a US
-            property address. Monthly payments are calculated from the 24-hour
-            PPE rate board shown in the header.
-          </p>
-        </div>
+      <LiveMarketBar />
 
-        <LoanPricingForm />
+      <main className="flex-1 py-8 sm:py-12">
+        <div className="ifund-page grid items-start gap-8 xl:grid-cols-[minmax(18rem,0.86fr)_minmax(0,1.5fr)] xl:gap-12">
+          <section>
+            <p className="font-sans text-xs font-semibold tracking-[0.18em] text-brand-champagne uppercase">
+              Fast, personalized mortgage pricing
+            </p>
+            <h1 className="mt-3 max-w-xl font-serif text-4xl font-bold tracking-tight text-brand-navy sm:text-5xl">
+              Price your loan in seconds
+            </h1>
+            <p className="mt-4 max-w-xl font-sans text-base leading-relaxed text-brand-slate sm:text-lg">
+              Explore purchase, refinance, cash-out, and VA loan scenarios using
+              today&apos;s live market board. Enter a few details to compare
+              estimated rates and monthly principal-and-interest payments.
+            </p>
+
+            <div className="mt-8 grid gap-3 sm:grid-cols-3 xl:grid-cols-1">
+              <div className="ifund-highlight">
+                <p className="font-serif text-lg font-semibold text-brand-navy">
+                  Live market board
+                </p>
+                <p className="mt-1 font-sans text-sm leading-relaxed text-brand-slate">
+                  Conventional, FHA, refinance, and cash-out rates stay in view
+                  while you price.
+                </p>
+              </div>
+              <div className="ifund-highlight">
+                <p className="font-serif text-lg font-semibold text-brand-navy">
+                  Instant payment math
+                </p>
+                <p className="mt-1 font-sans text-sm leading-relaxed text-brand-slate">
+                  Monthly principal and interest is calculated locally from the
+                  24-hour rate board.
+                </p>
+              </div>
+              <div className="ifund-highlight">
+                <p className="font-serif text-lg font-semibold text-brand-navy">
+                  VA-ready scenarios
+                </p>
+                <p className="mt-1 font-sans text-sm leading-relaxed text-brand-slate">
+                  Toggle VA pricing when needed and compare options for a U.S.
+                  property address.
+                </p>
+              </div>
+            </div>
+          </section>
+
+          <LoanPricingForm />
+        </div>
       </main>
 
       <SiteFooter />
     </div>
   );
-}
-
-export default function ClientPortal() {
-  const [screen, setScreen] = useState<Screen>('home');
-
-  if (screen === 'home') {
-    return <HomeScreen onContinue={() => setScreen('pricing')} />;
-  }
-
-  return <PricingScreen onBack={() => setScreen('home')} />;
 }

@@ -89,7 +89,7 @@ export default function LoanPricingForm() {
     }`;
 
   return (
-    <div className="mx-auto my-8 max-w-3xl rounded-2xl border border-brand-navy/10 bg-brand-white p-6 shadow-md sm:my-10 sm:p-8">
+    <div className="w-full rounded-2xl border border-brand-navy/10 bg-brand-white p-6 shadow-md sm:p-8 lg:p-10">
       <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <p className="font-sans text-xs font-semibold tracking-[0.14em] text-brand-slate uppercase">
@@ -139,7 +139,7 @@ export default function LoanPricingForm() {
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-6">
-        <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
+        <div className="grid grid-cols-1 gap-5 md:grid-cols-2 xl:grid-cols-3">
           {loanPurpose === 'purchase' && (
             <div>
               <label className="mb-2 block font-sans text-sm font-semibold text-brand-navy">
@@ -220,7 +220,7 @@ export default function LoanPricingForm() {
 
         <div>
           <label className="mb-2 block font-sans text-sm font-semibold text-brand-navy">
-            Property Address (United States)
+            Property Address (NY, NJ, PA, CT, or FL)
           </label>
           <UsAddressInput
             value={propertyAddress}
@@ -233,7 +233,7 @@ export default function LoanPricingForm() {
         <button
           type="submit"
           disabled={ratesLoading && products.length === 0}
-          className="ifund-cta"
+          className="ifund-cta sm:max-w-sm"
         >
           {ratesLoading && products.length === 0
             ? 'Loading PPE rates…'
@@ -257,7 +257,7 @@ export default function LoanPricingForm() {
             each quote. Principal &amp; interest only; taxes and insurance not
             included.
           </p>
-          <div className="space-y-4">
+          <div className="grid gap-4 md:grid-cols-2">
             {pricingResults.map((option) => (
               <div
                 key={option.productName}
