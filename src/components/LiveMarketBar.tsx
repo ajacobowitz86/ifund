@@ -13,38 +13,37 @@ function formatSignedChange(change: number) {
 export default function LiveMarketBar() {
   const { products, fetchedAt, loading, error } = usePpeRates();
 
-  const tickerItems = useMemo(() => {
-    const withMeta = products.map((item) => ({
-      ...item,
-      direction: directionFromChange(item.change),
-    }));
-    return [...withMeta, ...withMeta];
+  const featuredRates = useMemo(() => {
+    const featuredIds = ['conv-30', 'fha-30', 'va-30', 'jumbo-30'];
+    return featuredIds
+      .map((id) => products.find((item) => item.id === id))
+      .filter((item): item is NonNullable<typeof item> => Boolean(item))
+      .map((item) => ({
+        ...item,
+        direction: directionFromChange(item.change),
+      }));
   }, [products]);
 
   return (
-    <div className="live-market-bar" aria-label="Live PPE mortgage product rates">
+    <div className="live-market-bar" aria-label="Live mortgage rates">
       <div className="flex items-stretch">
         <div className="live-market-bar__label">
           <span className="live-market-bar__pulse" aria-hidden="true" />
-          <span className="hidden sm:inline">Live PPE</span>
-          <span className="sm:hidden">PPE</span>
+          <span>Live Rates</span>
         </div>
         <div className="relative min-w-0 flex-1 overflow-hidden">
           {error && products.length === 0 ? (
             <div className="flex h-full items-center px-4 text-[0.7rem] text-white/70">
-              PPE rates unavailable
+              Live rates unavailable
             </div>
           ) : loading && products.length === 0 ? (
             <div className="flex h-full items-center px-4 text-[0.7rem] text-white/70">
-              Loading PPE board…
+              Loading live rates…
             </div>
           ) : (
             <div className="live-market-bar__track">
-              {tickerItems.map((item, index) => (
-                <div
-                  key={`${item.id}-${index}`}
-                  className="live-market-bar__item"
-                >
+              {featuredRates.map((item) => (
+                <div key={item.id} className="live-market-bar__item">
                   <span className="live-market-bar__product">{item.product}</span>
                   <span className="live-market-bar__rate">
                     {item.rate.toFixed(3)}%

@@ -17,13 +17,13 @@ export default function ClientPortal() {
         <div className="mx-auto flex max-w-6xl items-center justify-between gap-4 px-4 py-4 sm:px-6 lg:px-8">
           <div className="flex min-w-0 items-center gap-3 sm:gap-4">
             <Image
-              src="/ifund-logo.png"
-              alt="IFUND EQUITY"
-              width={1024}
-              height={1024}
+              src="/ifund-mark.png"
+              alt=""
+              width={451}
+              height={471}
               priority
               unoptimized
-              className="h-20 w-20 shrink-0 object-contain sm:h-24 sm:w-24"
+              className="h-14 w-14 shrink-0 object-contain sm:h-16 sm:w-16"
             />
             <div className="min-w-0">
               <p className="font-serif text-lg font-bold tracking-[0.12em] text-brand-navy sm:text-2xl">
