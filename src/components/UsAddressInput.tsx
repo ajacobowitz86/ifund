@@ -9,8 +9,6 @@ import {
   predictionIsInServiceStates,
 } from '@/lib/service-states';
 
-const libraries: ('places')[] = ['places'];
-
 type UsAddressInputProps = {
   value: string;
   onChange: (value: string) => void;
@@ -38,11 +36,17 @@ function PlainAddressInput({
   );
 }
 
-function stateCodeFromPlace(place: google.maps.places.PlaceResult): string | null {
-  const component = place.address_components?.find((item) =>
+function stateCodeFromPlace(place: google.maps.places.Place): string | null {
+  const component = place.addressComponents?.find((item) =>
     item.types.includes('administrative_area_level_1'),
   );
-  return component?.short_name ?? null;
+  return component?.shortText ?? null;
+}
+
+declare global {
+  interface Window {
+    gm_authFailure?: () => void;
+  }
 }
 
 function GoogleServiceAreaAddressInput({
@@ -52,19 +56,29 @@ function GoogleServiceAreaAddressInput({
   className,
 }: UsAddressInputProps) {
   const containerRef = useRef<HTMLDivElement | null>(null);
-  const attributionRef = useRef<HTMLDivElement | null>(null);
   const sessionTokenRef =
     useRef<google.maps.places.AutocompleteSessionToken | null>(null);
   const [predictions, setPredictions] = useState<
-    google.maps.places.AutocompletePrediction[]
+    google.maps.places.PlacePrediction[]
   >([]);
   const [open, setOpen] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [mapsAuthFailed, setMapsAuthFailed] = useState(false);
 
   const { isLoaded, loadError } = useLoadScript({
     googleMapsApiKey: process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY || '',
-    libraries,
   });
+
+  useEffect(() => {
+    const previous = window.gm_authFailure;
+    window.gm_authFailure = () => {
+      setMapsAuthFailed(true);
+      previous?.();
+    };
+    return () => {
+      window.gm_authFailure = previous;
+    };
+  }, []);
 
   useEffect(() => {
     if (!open) return;
@@ -80,85 +94,100 @@ function GoogleServiceAreaAddressInput({
   }, [open]);
 
   useEffect(() => {
-    if (!isLoaded) return;
+    if (!isLoaded || mapsAuthFailed) return;
 
     const query = value.trim();
     if (query.length < 3) {
       return;
     }
 
+    let cancelled = false;
     const handle = window.setTimeout(() => {
-      if (!sessionTokenRef.current) {
-        sessionTokenRef.current = new google.maps.places.AutocompleteSessionToken();
-      }
+      void (async () => {
+        try {
+          const { AutocompleteSuggestion, AutocompleteSessionToken } =
+            (await google.maps.importLibrary(
+              'places',
+            )) as google.maps.PlacesLibrary;
 
-      const service = new google.maps.places.AutocompleteService();
-      service.getPlacePredictions(
-        {
-          input: query,
-          componentRestrictions: { country: 'us' },
-          types: ['address'],
-          sessionToken: sessionTokenRef.current,
-        },
-        (results, status) => {
-          if (
-            status !== google.maps.places.PlacesServiceStatus.OK ||
-            !results
-          ) {
-            setPredictions([]);
-            return;
+          if (cancelled) return;
+
+          if (!sessionTokenRef.current) {
+            sessionTokenRef.current = new AutocompleteSessionToken();
           }
 
+          const { suggestions } =
+            await AutocompleteSuggestion.fetchAutocompleteSuggestions({
+              input: query,
+              includedRegionCodes: ['us'],
+              region: 'us',
+              includedPrimaryTypes: ['street_address', 'premise', 'subpremise'],
+              sessionToken: sessionTokenRef.current,
+            });
+
+          if (cancelled) return;
+
           setPredictions(
-            results.filter(predictionIsInServiceStates).slice(0, 6),
+            (suggestions ?? [])
+              .map((suggestion) => suggestion.placePrediction)
+              .filter(
+                (prediction): prediction is google.maps.places.PlacePrediction =>
+                  Boolean(prediction),
+              )
+              .filter((prediction) =>
+                predictionIsInServiceStates({
+                  description: prediction.text.text,
+                }),
+              )
+              .slice(0, 6),
           );
-        },
-      );
+        } catch {
+          if (!cancelled) {
+            setPredictions([]);
+          }
+        }
+      })();
     }, 200);
 
-    return () => window.clearTimeout(handle);
-  }, [isLoaded, value]);
+    return () => {
+      cancelled = true;
+      window.clearTimeout(handle);
+    };
+  }, [isLoaded, mapsAuthFailed, value]);
 
-  const selectPrediction = (
-    prediction: google.maps.places.AutocompletePrediction,
+  const selectPrediction = async (
+    prediction: google.maps.places.PlacePrediction,
   ) => {
-    if (!attributionRef.current) return;
+    setOpen(false);
 
-    const places = new google.maps.places.PlacesService(attributionRef.current);
-    places.getDetails(
-      {
-        placeId: prediction.place_id,
-        fields: ['formatted_address', 'address_components', 'geometry'],
-        sessionToken: sessionTokenRef.current ?? undefined,
-      },
-      (place, status) => {
-        sessionTokenRef.current = null;
-        setOpen(false);
+    try {
+      const place = prediction.toPlace();
+      await place.fetchFields({
+        fields: ['formattedAddress', 'addressComponents'],
+      });
+      sessionTokenRef.current = null;
 
-        if (
-          status !== google.maps.places.PlacesServiceStatus.OK ||
-          !place?.formatted_address
-        ) {
-          setError('That address could not be confirmed. Please try another.');
-          return;
-        }
+      if (!place.formattedAddress) {
+        setError('That address could not be confirmed. Please try another.');
+        return;
+      }
 
-        if (!isAllowedServiceState(stateCodeFromPlace(place))) {
-          setError(
-            `Please choose an address in ${SERVICE_STATES_LABEL}.`,
-          );
-          onChange('');
-          return;
-        }
+      if (!isAllowedServiceState(stateCodeFromPlace(place))) {
+        setError(`Please choose an address in ${SERVICE_STATES_LABEL}.`);
+        onChange('');
+        return;
+      }
 
-        setError(null);
-        onChange(place.formatted_address);
-        setPredictions([]);
-      },
-    );
+      setError(null);
+      onChange(place.formattedAddress);
+      setPredictions([]);
+    } catch {
+      sessionTokenRef.current = null;
+      setError('That address could not be confirmed. Please try another.');
+    }
   };
 
-  if (loadError) {
+  if (loadError || mapsAuthFailed) {
     return (
       <div className="space-y-2">
         <PlainAddressInput
@@ -211,14 +240,16 @@ function GoogleServiceAreaAddressInput({
       {open && value.trim().length >= 3 && predictions.length > 0 && (
         <ul className="absolute z-30 mt-1 max-h-64 w-full overflow-auto rounded-xl border border-brand-navy/15 bg-brand-white py-1 shadow-lg">
           {predictions.map((prediction) => (
-            <li key={prediction.place_id}>
+            <li key={prediction.placeId}>
               <button
                 type="button"
                 className="w-full px-4 py-2 text-left font-sans text-sm text-brand-navy hover:bg-brand-canvas"
                 onMouseDown={(event) => event.preventDefault()}
-                onClick={() => selectPrediction(prediction)}
+                onClick={() => {
+                  void selectPrediction(prediction);
+                }}
               >
-                {prediction.description}
+                {prediction.text.text}
               </button>
             </li>
           ))}
@@ -228,14 +259,13 @@ function GoogleServiceAreaAddressInput({
         Address lookup is limited to {SERVICE_STATES_LABEL}.
       </p>
       {error && <p className="text-xs text-amber-700">{error}</p>}
-      <div ref={attributionRef} className="hidden" />
     </div>
   );
 }
 
 /**
  * Property address input limited to NY, NJ, PA, CT, and FL.
- * Uses Google Places Autocomplete when NEXT_PUBLIC_GOOGLE_MAPS_API_KEY is set.
+ * Uses Google Places Autocomplete (New) when NEXT_PUBLIC_GOOGLE_MAPS_API_KEY is set.
  */
 export default function UsAddressInput(props: UsAddressInputProps) {
   const hasMapsKey = Boolean(process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY);
