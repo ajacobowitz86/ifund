@@ -1,6 +1,6 @@
 {
   "name": "ifund",
-  "install": "npm ci\nbash scripts/sync-cloud-env.sh",
+  "install": "npm ci\ntest ! -f scripts/sync-cloud-env.sh || bash scripts/sync-cloud-env.sh",
   "terminals": [
     {
       "name": "dev",
