@@ -220,7 +220,7 @@ export default function LoanPricingForm() {
 
         <div>
           <label className="mb-2 block font-sans text-sm font-semibold text-brand-navy">
-            Property Address (United States)
+            Property Address (NY, NJ, PA, CT, or FL)
           </label>
           <UsAddressInput
             value={propertyAddress}

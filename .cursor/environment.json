@@ -1,6 +1,6 @@
 {
   "name": "ifund",
-  "install": "npm ci\ntest -f .env.local || cp .env.example .env.local",
+  "install": "npm ci\nbash scripts/sync-cloud-env.sh",
   "terminals": [
     {
       "name": "dev",
