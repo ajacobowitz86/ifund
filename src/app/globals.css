@@ -176,9 +176,36 @@ body {
   display: flex;
   flex-direction: column;
   background:
-    radial-gradient(ellipse 90% 55% at 50% -10%, #d7e0ec 0%, transparent 55%),
+    radial-gradient(ellipse 70% 50% at 8% 18%, rgba(196, 165, 116, 0.12) 0%, transparent 52%),
+    radial-gradient(ellipse 70% 50% at 92% 12%, rgba(12, 35, 64, 0.08) 0%, transparent 48%),
     var(--brand-canvas);
   color: var(--brand-navy);
+}
+
+.ifund-page {
+  width: 100%;
+  max-width: 90rem;
+  margin-inline: auto;
+  padding-inline: 1.25rem;
+}
+
+@media (min-width: 640px) {
+  .ifund-page {
+    padding-inline: 2rem;
+  }
+}
+
+@media (min-width: 1024px) {
+  .ifund-page {
+    padding-inline: 2.75rem;
+  }
+}
+
+.ifund-highlight {
+  border: 1px solid rgba(12, 35, 64, 0.08);
+  background: rgba(255, 255, 255, 0.82);
+  border-radius: 1rem;
+  padding: 1rem 1.1rem;
 }
 
 .ifund-portal-card {
