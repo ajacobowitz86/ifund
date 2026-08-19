@@ -256,7 +256,7 @@ function GoogleServiceAreaAddressInput({
         </ul>
       )}
       <p className="text-xs text-brand-slate">
-        Address lookup is limited to {SERVICE_STATES_LABEL}.
+        Property location is limited to {SERVICE_STATES_LABEL}.
       </p>
       {error && <p className="text-xs text-amber-700">{error}</p>}
     </div>
@@ -278,7 +278,7 @@ export default function UsAddressInput(props: UsAddressInputProps) {
           placeholder="Enter street address in NY, NJ, PA, CT, or FL"
         />
         <p className="text-xs text-brand-slate">
-          Lending area: {SERVICE_STATES_LABEL}.
+          Property location is limited to {SERVICE_STATES_LABEL}.
         </p>
       </div>
     );

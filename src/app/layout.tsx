@@ -1,40 +1,34 @@
 import type { Metadata } from "next";
-import { Cormorant_Garamond, IBM_Plex_Sans, IBM_Plex_Mono } from "next/font/google";
+import { Inter, Playfair_Display } from "next/font/google";
 import "./globals.css";
 
-const brandSerif = Cormorant_Garamond({
+const brandSerif = Playfair_Display({
   variable: "--font-brand-serif",
   subsets: ["latin"],
   weight: ["500", "600", "700"],
 });
 
-const brandSans = IBM_Plex_Sans({
+const brandSans = Inter({
   variable: "--font-brand-sans",
   subsets: ["latin"],
-  weight: ["400", "500", "600"],
-});
-
-const brandMono = IBM_Plex_Mono({
-  variable: "--font-brand-mono",
-  subsets: ["latin"],
-  weight: ["400", "500"],
+  weight: ["400", "500", "600", "700"],
 });
 
 export const metadata: Metadata = {
   title: {
-    default: "IFUND EQUITY | Live Mortgage Pricing",
+    default: "IFUND EQUITY | Mortgage Pricing Engine",
     template: "%s | IFUND EQUITY",
   },
   description:
-    "IFUND EQUITY client portal with live market rates and personalized loan pricing for purchase, refinance, and cash-out.",
+    "Price conventional, FHA, refinance, and HELOC loans in seconds with instant, no-obligation quotes.",
   icons: {
     icon: "/ifund-mark.png",
     apple: "/ifund-mark.png",
   },
   openGraph: {
-    title: "IFUND EQUITY | Live Mortgage Pricing",
+    title: "IFUND EQUITY | Mortgage Pricing Engine",
     description:
-      "Track live market benchmarks and run personalized US loan pricing scenarios.",
+      "Instant pricing for conventional, FHA, rate-and-term refinance, cash-out refinance, and HELOC.",
     siteName: "IFUND EQUITY",
     type: "website",
   },
@@ -48,7 +42,7 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={`${brandSerif.variable} ${brandSans.variable} ${brandMono.variable} h-full antialiased`}
+      className={`${brandSerif.variable} ${brandSans.variable} h-full antialiased`}
     >
       <body className="min-h-full font-sans text-brand-navy antialiased">
         {children}
