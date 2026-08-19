@@ -1,93 +1,94 @@
 'use client';
 
-/**
- * MAIN UI — ClientPortal
- * Composes: LiveMarketBar (24h PPE board) + SiteFooter + LoanPricingForm calculator
- */
-
-import Image from 'next/image';
+import BrandHeader from '@/components/BrandHeader';
 import LiveMarketBar from '@/components/LiveMarketBar';
 import LoanPricingForm from '@/components/LoanPricingForm';
 import SiteFooter from '@/components/SiteFooter';
 
+function FeatureIcon({ name }: { name: 'bolt' | 'refresh' | 'check' }) {
+  if (name === 'bolt') {
+    return (
+      <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+        <path
+          d="M13 2 4 14h8l-2 8 11-14h-8l0-6Z"
+          fill="currentColor"
+        />
+      </svg>
+    );
+  }
+  if (name === 'refresh') {
+    return (
+      <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+        <path
+          d="M20 12a8 8 0 1 1-2.2-5.5"
+          stroke="currentColor"
+          strokeWidth="1.8"
+          strokeLinecap="round"
+        />
+        <path
+          d="M20 4.5V9h-4.5"
+          stroke="currentColor"
+          strokeWidth="1.8"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        />
+      </svg>
+    );
+  }
+  return (
+    <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+      <path
+        d="M5 12.5 9.2 16.7 19 6.5"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+      <path
+        d="M5 8.5 9.2 12.7 19 2.5"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+}
+
 export default function ClientPortal() {
   return (
     <div className="ifund-shell">
-      <header className="border-b border-brand-navy/10 bg-brand-white">
-        <div className="ifund-page flex items-center justify-between gap-4 py-4">
-          <div className="flex min-w-0 items-center gap-3 sm:gap-4">
-            <Image
-              src="/ifund-house-mark.png"
-              alt=""
-              width={662}
-              height={614}
-              priority
-              unoptimized
-              className="h-16 w-auto shrink-0 object-contain sm:h-20"
-            />
-            <div className="min-w-0">
-              <p className="font-serif text-lg font-bold tracking-[0.12em] text-brand-navy sm:text-2xl">
-                IFUND EQUITY
-              </p>
-              <p className="mt-1 hidden font-sans text-[0.65rem] tracking-[0.14em] text-brand-slate uppercase sm:block">
-                Institutional Growth &amp; Real Estate
-              </p>
-            </div>
-          </div>
-
-          <a
-            href="mailto:consult@ifundequity.com?subject=IFUND%20Loan%20Pricing"
-            className="ifund-chat-button"
-          >
-            Chat with us
-          </a>
-        </div>
-      </header>
-
+      <BrandHeader />
       <LiveMarketBar />
 
-      <main className="flex-1 py-8 sm:py-12">
-        <div className="ifund-page grid items-start gap-8 xl:grid-cols-[minmax(18rem,0.86fr)_minmax(0,1.5fr)] xl:gap-12">
-          <section>
-            <p className="font-sans text-xs font-semibold tracking-[0.18em] text-brand-champagne uppercase">
-              Fast, personalized mortgage pricing
+      <main className="flex-1 pb-12">
+        <div className="ifund-page">
+          <section className="pricing-hero">
+            <p className="pricing-hero__kicker">Mortgage pricing engine</p>
+            <h1 className="pricing-hero__title">Price any property loan in seconds.</h1>
+            <p className="pricing-hero__lede">
+              Instant quotes for conventional, FHA, rate-and-term refinance,
+              cash-out refinance, and HELOC. Enter the details for your loan type
+              and the best-fit quote updates in real time — no obligation.
             </p>
-            <h1 className="mt-3 max-w-xl font-serif text-4xl font-bold tracking-tight text-brand-navy sm:text-5xl">
-              Price your loan in seconds
-            </h1>
-            <p className="mt-4 max-w-xl font-sans text-base leading-relaxed text-brand-slate sm:text-lg">
-              Explore purchase, refinance, cash-out, and VA loan scenarios using
-              today&apos;s live market board. Enter a few details to compare
-              estimated rates and monthly principal-and-interest payments.
-            </p>
-
-            <div className="mt-8 grid gap-3 sm:grid-cols-3 xl:grid-cols-1">
-              <div className="ifund-highlight">
-                <p className="font-serif text-lg font-semibold text-brand-navy">
-                  Live market board
-                </p>
-                <p className="mt-1 font-sans text-sm leading-relaxed text-brand-slate">
-                  Conventional, FHA, refinance, and cash-out rates stay in view
-                  while you price.
-                </p>
+            <div className="pricing-hero__features">
+              <div className="pricing-hero__feature">
+                <span className="pricing-hero__icon">
+                  <FeatureIcon name="bolt" />
+                </span>
+                Instant, no-obligation pricing
               </div>
-              <div className="ifund-highlight">
-                <p className="font-serif text-lg font-semibold text-brand-navy">
-                  Instant payment math
-                </p>
-                <p className="mt-1 font-sans text-sm leading-relaxed text-brand-slate">
-                  Monthly principal and interest is calculated locally from the
-                  24-hour rate board.
-                </p>
+              <div className="pricing-hero__feature">
+                <span className="pricing-hero__icon">
+                  <FeatureIcon name="refresh" />
+                </span>
+                Real-time rate adjustments
               </div>
-              <div className="ifund-highlight">
-                <p className="font-serif text-lg font-semibold text-brand-navy">
-                  VA-ready scenarios
-                </p>
-                <p className="mt-1 font-sans text-sm leading-relaxed text-brand-slate">
-                  Toggle VA pricing when needed and compare options for a U.S.
-                  property address.
-                </p>
+              <div className="pricing-hero__feature">
+                <span className="pricing-hero__icon">
+                  <FeatureIcon name="check" />
+                </span>
+                All property loan types
               </div>
             </div>
           </section>

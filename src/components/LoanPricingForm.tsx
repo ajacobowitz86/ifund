@@ -1,301 +1,478 @@
 'use client';
 
-import React, { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import UsAddressInput from '@/components/UsAddressInput';
 import { usePpeRates } from '@/hooks/usePpeRates';
 import {
-  buildCalculatorOptions,
-  type CalculatorOption,
+  LOAN_PRODUCTS,
+  OCCUPANCY_OPTIONS,
+  buildBestFitQuote,
+  maxLtvFor,
+  type LoanProductId,
+  type Occupancy,
 } from '@/lib/ppe-rates';
 
-const addressInputClassName =
-  'w-full rounded-xl border border-brand-navy/15 bg-brand-canvas px-4 py-3 font-sans text-brand-navy outline-none transition-all focus:bg-brand-white focus:ring-2 focus:ring-brand-navy';
+function formatUsd(value: number, digits = 0) {
+  if (!Number.isFinite(value)) return '0';
+  return value.toLocaleString('en-US', {
+    minimumFractionDigits: digits,
+    maximumFractionDigits: digits,
+  });
+}
 
-const fieldClassName =
-  'w-full rounded-xl border border-brand-navy/15 bg-brand-canvas py-3 font-sans text-brand-navy outline-none transition-all focus:bg-brand-white focus:ring-2 focus:ring-brand-navy';
+function formatRate(value: number) {
+  return `${value.toFixed(3)}%`;
+}
+
+function parseMoney(raw: string) {
+  const n = Number(raw.replace(/[^\d]/g, ''));
+  return Number.isFinite(n) ? n : 0;
+}
+
+function MoneyField({
+  label,
+  value,
+  onChange,
+}: {
+  label: string;
+  value: number;
+  onChange: (value: number) => void;
+}) {
+  return (
+    <label>
+      <span className="field-label">{label}</span>
+      <span className="money-input">
+        <span>$</span>
+        <input
+          inputMode="numeric"
+          value={value ? formatUsd(value) : ''}
+          onChange={(event) => onChange(parseMoney(event.target.value))}
+        />
+      </span>
+    </label>
+  );
+}
+
+const ADDRESS_CLASS =
+  'w-full rounded-[5px] border border-[#e5e7eb] bg-white px-3.5 py-[0.7rem] font-sans text-[0.95rem] text-brand-navy outline-none';
 
 export default function LoanPricingForm() {
-  const { products, fetchedAt, loading: ratesLoading, error: ratesError } =
-    usePpeRates();
+  const { products, loading, error } = usePpeRates();
+  const [productId, setProductId] = useState<LoanProductId>('conventional');
+  const [purchasePrice, setPurchasePrice] = useState(500000);
+  const [propertyValue, setPropertyValue] = useState(500000);
+  const [downPayment, setDownPayment] = useState(100000);
+  const [currentBalance, setCurrentBalance] = useState(320000);
+  const [cashOutAmount, setCashOutAmount] = useState(50000);
+  const [helocLine, setHelocLine] = useState(75000);
+  const [helocDraw, setHelocDraw] = useState(25000);
+  const [creditScore, setCreditScore] = useState(740);
+  const [termMonths, setTermMonths] = useState(360);
+  const [occupancy, setOccupancy] = useState<Occupancy>('primary');
+  const [propertyAddress, setPropertyAddress] = useState('');
+  const [now, setNow] = useState<Date | null>(null);
 
-  const [loanPurpose, setLoanPurpose] = useState<
-    'purchase' | 'rate_term' | 'cash_out'
-  >('purchase');
-  const [purchasePrice, setPurchasePrice] = useState<string>('');
-  const [loanAmount, setLoanAmount] = useState<string>('');
-  const [creditScore, setCreditScore] = useState<string>('');
-  const [propertyAddress, setPropertyAddress] = useState<string>('');
-  const [cashOutAmount, setCashOutAmount] = useState<string>('');
-  const [isVaLoan, setIsVaLoan] = useState<boolean>(false);
+  const product = LOAN_PRODUCTS.find((item) => item.id === productId) ?? LOAN_PRODUCTS[0];
+  const isPurchase = productId === 'conventional' || productId === 'fha';
+  const occupancyChoices = OCCUPANCY_OPTIONS.filter((item) =>
+    product.occupancyOptions.includes(item.id),
+  );
 
-  const [pricingResults, setPricingResults] = useState<CalculatorOption[]>([]);
-  const [error, setError] = useState<string | null>(null);
-  const [hasCalculated, setHasCalculated] = useState(false);
+  useEffect(() => {
+    setNow(new Date());
+    const id = window.setInterval(() => setNow(new Date()), 1000);
+    return () => window.clearInterval(id);
+  }, []);
 
-  const boardLabel = useMemo(() => {
-    if (!fetchedAt) return 'PPE board loading…';
-    return `Using PPE board from ${fetchedAt.toLocaleString('en-US', {
-      month: 'short',
-      day: 'numeric',
-      hour: 'numeric',
-      minute: '2-digit',
-    })} (refreshes every 24h)`;
-  }, [fetchedAt]);
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    setError(null);
-
-    const amount = parseFloat(loanAmount);
-    const score = parseInt(creditScore, 10);
-
-    if (!Number.isFinite(amount) || amount <= 0) {
-      setError('Enter a valid loan amount.');
-      setPricingResults([]);
-      setHasCalculated(false);
-      return;
-    }
-
-    if (!Number.isFinite(score) || score < 300 || score > 850) {
-      setError('Enter a credit score between 300 and 850.');
-      setPricingResults([]);
-      setHasCalculated(false);
-      return;
-    }
-
-    if (products.length === 0) {
-      setError(ratesError || 'PPE rates are not available yet. Try again shortly.');
-      setPricingResults([]);
-      setHasCalculated(false);
-      return;
-    }
-
-    const options = buildCalculatorOptions({
+  const quote = useMemo(() => {
+    if (products.length === 0) return null;
+    return buildBestFitQuote({
       products,
-      loanAmount: amount,
-      creditScore: score,
-      isVaLoan,
+      productId,
+      purchasePrice,
+      propertyValue,
+      downPayment,
+      currentBalance,
+      cashOutAmount,
+      helocLine,
+      helocDraw,
+      creditScore,
+      termMonths,
+      occupancy,
     });
+  }, [
+    products,
+    productId,
+    purchasePrice,
+    propertyValue,
+    downPayment,
+    currentBalance,
+    cashOutAmount,
+    helocLine,
+    helocDraw,
+    creditScore,
+    termMonths,
+    occupancy,
+  ]);
 
-    setPricingResults(options);
-    setHasCalculated(true);
+  const liveLabel = now
+    ? `Live • ${now.toLocaleTimeString('en-US', {
+        hour: '2-digit',
+        minute: '2-digit',
+        second: '2-digit',
+      })}`
+    : 'Live';
+
+  const derivedLoan = isPurchase
+    ? Math.max(0, purchasePrice - downPayment)
+    : productId === 'cash_out'
+      ? currentBalance + cashOutAmount
+      : productId === 'heloc'
+        ? helocLine
+        : currentBalance;
+  const derivedValue = isPurchase ? purchasePrice : propertyValue;
+  const derivedLtv = derivedValue > 0 ? derivedLoan / derivedValue : 0;
+  const derivedCltv =
+    propertyValue > 0 ? (currentBalance + helocLine) / propertyValue : 0;
+  const minFhaDown = Math.round(purchasePrice * 0.035);
+  const maxHelocLine = Math.max(
+    0,
+    Math.round(propertyValue * maxLtvFor('heloc', occupancy) - currentBalance),
+  );
+
+  const selectProduct = (id: LoanProductId) => {
+    const next = LOAN_PRODUCTS.find((item) => item.id === id);
+    if (!next) return;
+    setProductId(id);
+    setTermMonths(next.defaultTermMonths);
+    if (!next.occupancyOptions.includes(occupancy)) {
+      setOccupancy(next.occupancyOptions[0]);
+    }
+    if (id === 'fha') {
+      setOccupancy('primary');
+      setDownPayment(minFhaDown);
+    }
+    if (id === 'conventional' && downPayment < purchasePrice * 0.1) {
+      setDownPayment(Math.round(purchasePrice * 0.2));
+    }
   };
 
-  const purposeTabClass = (active: boolean) =>
-    `rounded-xl border px-4 py-3 font-sans text-sm font-semibold transition-all ${
-      active
-        ? 'border-brand-navy bg-brand-navy text-brand-white shadow-md'
-        : 'border-brand-navy/15 bg-brand-canvas text-brand-slate hover:bg-brand-white'
-    }`;
+  const consultationHref = useMemo(() => {
+    if (!quote) {
+      return 'mailto:consult@ifundequity.com?subject=Lock%20rate%20%E2%80%94%20Request%20consultation';
+    }
+    const body = [
+      `Product: ${quote.productName}`,
+      `Rate: ${formatRate(quote.interestRate)}  APR: ${formatRate(quote.apr)}`,
+      `Estimated monthly: $${formatUsd(quote.totalMonthly)} (${quote.paymentNote})`,
+      `Property: ${propertyAddress || 'Not provided'}`,
+      `Credit score: ${creditScore}`,
+      `Occupancy: ${OCCUPANCY_OPTIONS.find((item) => item.id === occupancy)?.label}`,
+      ...quote.metrics.map((metric) =>
+        `${metric.label}: ${metric.value}${metric.hint ? ` (${metric.hint})` : ''}`,
+      ),
+    ].join('\n');
+
+    return `mailto:consult@ifundequity.com?subject=${encodeURIComponent(
+      'Lock this rate — Request consultation',
+    )}&body=${encodeURIComponent(body)}`;
+  }, [quote, creditScore, occupancy, propertyAddress]);
 
   return (
-    <div className="w-full rounded-2xl border border-brand-navy/10 bg-brand-white p-6 shadow-md sm:p-8 lg:p-10">
-      <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-        <div>
-          <p className="font-sans text-xs font-semibold tracking-[0.14em] text-brand-slate uppercase">
-            Loan details
-          </p>
-          <h2 className="mt-1 font-serif text-2xl font-bold text-brand-navy">
-            Price your loan
-          </h2>
-          <p className="mt-2 font-sans text-xs text-brand-slate">{boardLabel}</p>
+    <section className="pricing-engine" aria-label="Mortgage pricing engine">
+      <div>
+        <h2 className="scenario-title">Your scenario</h2>
+        <p className="scenario-lede">
+          Adjust the details and your quote updates instantly
+        </p>
+
+        <p className="field-label">Loan product</p>
+        <div className="product-grid">
+          {LOAN_PRODUCTS.map((item) => (
+            <button
+              key={item.id}
+              type="button"
+              className={`choice-btn${productId === item.id ? ' is-active' : ''}`}
+              onClick={() => selectProduct(item.id)}
+            >
+              {item.label}
+            </button>
+          ))}
         </div>
+        <p className="scenario-hint">{product.needed}</p>
 
-        <button
-          type="button"
-          onClick={() => setIsVaLoan(!isVaLoan)}
-          className={`self-start rounded-lg px-4 py-2 font-sans text-sm font-semibold shadow-sm transition-all ${
-            isVaLoan
-              ? 'bg-brand-champagne text-white ring-2 ring-brand-champagne/40'
-              : 'bg-brand-canvas text-brand-navy hover:bg-brand-navy/5'
-          }`}
-        >
-          {isVaLoan ? '✓ VA Loan Active' : '+ VA Loan'}
-        </button>
-      </div>
-
-      <div className="mb-8 grid grid-cols-3 gap-3">
-        <button
-          type="button"
-          onClick={() => setLoanPurpose('purchase')}
-          className={purposeTabClass(loanPurpose === 'purchase')}
-        >
-          Purchase
-        </button>
-        <button
-          type="button"
-          onClick={() => setLoanPurpose('rate_term')}
-          className={purposeTabClass(loanPurpose === 'rate_term')}
-        >
-          Rate & Term Refi
-        </button>
-        <button
-          type="button"
-          onClick={() => setLoanPurpose('cash_out')}
-          className={purposeTabClass(loanPurpose === 'cash_out')}
-        >
-          Cash-Out Refi
-        </button>
-      </div>
-
-      <form onSubmit={handleSubmit} className="space-y-6">
-        <div className="grid grid-cols-1 gap-5 md:grid-cols-2 xl:grid-cols-3">
-          {loanPurpose === 'purchase' && (
-            <div>
-              <label className="mb-2 block font-sans text-sm font-semibold text-brand-navy">
-                Purchase Price
-              </label>
-              <div className="relative">
-                <span className="absolute inset-y-0 left-0 flex items-center pl-3 text-brand-slate">
-                  $
-                </span>
-                <input
-                  type="number"
-                  value={purchasePrice}
-                  onChange={(e) => setPurchasePrice(e.target.value)}
-                  required
-                  className={`${fieldClassName} pl-8 pr-4`}
-                  placeholder="500,000"
-                />
-              </div>
-            </div>
-          )}
-
-          <div>
-            <label className="mb-2 block font-sans text-sm font-semibold text-brand-navy">
-              {loanPurpose === 'purchase' ? 'Loan Amount' : 'Requested Loan Amount'}
-            </label>
-            <div className="relative">
-              <span className="absolute inset-y-0 left-0 flex items-center pl-3 text-brand-slate">
-                $
-              </span>
-              <input
-                type="number"
-                value={loanAmount}
-                onChange={(e) => setLoanAmount(e.target.value)}
-                required
-                className={`${fieldClassName} pl-8 pr-4`}
-                placeholder="400,000"
+        {isPurchase && (
+          <>
+            <div className="field-grid">
+              <MoneyField
+                label="Purchase price"
+                value={purchasePrice}
+                onChange={(value) => {
+                  setPurchasePrice(value);
+                  if (downPayment > value) setDownPayment(value);
+                }}
+              />
+              <MoneyField
+                label="Down payment"
+                value={downPayment}
+                onChange={setDownPayment}
               />
             </div>
-          </div>
+            <p className="computed-line">
+              Loan amount ${formatUsd(derivedLoan)} · {Math.round(derivedLtv * 100)}% LTV
+              {productId === 'fha' ? ` · FHA minimum down $${formatUsd(minFhaDown)}` : ''}
+            </p>
+          </>
+        )}
 
-          {loanPurpose === 'cash_out' && (
-            <div>
-              <label className="mb-2 block font-sans text-sm font-semibold text-brand-navy">
-                Cash-Out Amount Needed
-              </label>
-              <div className="relative">
-                <span className="absolute inset-y-0 left-0 flex items-center pl-3 text-brand-slate">
-                  $
-                </span>
-                <input
-                  type="number"
-                  value={cashOutAmount}
-                  onChange={(e) => setCashOutAmount(e.target.value)}
-                  required
-                  className={`${fieldClassName} pl-8 pr-4`}
-                  placeholder="50,000"
-                />
-              </div>
-            </div>
-          )}
-
-          <div>
-            <label className="mb-2 block font-sans text-sm font-semibold text-brand-navy">
-              Credit Score
-            </label>
-            <input
-              type="number"
-              value={creditScore}
-              onChange={(e) => setCreditScore(e.target.value)}
-              required
-              min="300"
-              max="850"
-              className={`${fieldClassName} px-4`}
-              placeholder="740"
+        {productId === 'rate_term' && (
+          <div className="field-grid">
+            <MoneyField
+              label="Property value"
+              value={propertyValue}
+              onChange={setPropertyValue}
+            />
+            <MoneyField
+              label="Current loan balance"
+              value={currentBalance}
+              onChange={setCurrentBalance}
             />
           </div>
-        </div>
+        )}
 
-        <div>
-          <label className="mb-2 block font-sans text-sm font-semibold text-brand-navy">
-            Property Address (NY, NJ, PA, CT, or FL)
-          </label>
-          <UsAddressInput
-            value={propertyAddress}
-            onChange={setPropertyAddress}
-            required
-            className={addressInputClassName}
-          />
-        </div>
+        {productId === 'cash_out' && (
+          <>
+            <div className="field-grid">
+              <MoneyField
+                label="Property value"
+                value={propertyValue}
+                onChange={setPropertyValue}
+              />
+              <MoneyField
+                label="Current loan balance"
+                value={currentBalance}
+                onChange={setCurrentBalance}
+              />
+            </div>
+            <div className="extra-box">
+              <p className="extra-box__title">Cash-out amount</p>
+              <MoneyField
+                label="Cash you want to take out"
+                value={cashOutAmount}
+                onChange={setCashOutAmount}
+              />
+              <p className="computed-line">
+                New loan ${formatUsd(derivedLoan)} · {Math.round(derivedLtv * 100)}% LTV
+              </p>
+            </div>
+          </>
+        )}
 
-        <button
-          type="submit"
-          disabled={ratesLoading && products.length === 0}
-          className="ifund-cta sm:max-w-sm"
-        >
-          {ratesLoading && products.length === 0
-            ? 'Loading PPE rates…'
-            : 'Calculate Monthly Payments'}
-        </button>
-      </form>
-
-      {(error || ratesError) && (
-        <div className="mt-6 rounded-xl border border-red-200 bg-red-50 p-4 font-sans text-sm text-red-700">
-          {error || ratesError}
-        </div>
-      )}
-
-      {hasCalculated && pricingResults.length > 0 && (
-        <div className="mt-10 border-t border-brand-navy/10 pt-6">
-          <h3 className="mb-1 font-serif text-xl font-bold text-brand-navy">
-            Monthly payment options
-          </h3>
-          <p className="mb-4 font-sans text-xs text-brand-slate">
-            Calculated from the 24-hour PPE rate board — no live PPE post on
-            each quote. Principal &amp; interest only; taxes and insurance not
-            included.
-          </p>
-          <div className="grid gap-4 md:grid-cols-2">
-            {pricingResults.map((option) => (
-              <div
-                key={option.productName}
-                className="flex items-center justify-between rounded-xl border border-brand-navy/10 bg-brand-canvas p-5 transition-all hover:border-brand-navy/25"
-              >
-                <div>
-                  <h4 className="font-sans text-base font-bold text-brand-navy">
-                    {option.productName}
-                  </h4>
-                  <p className="mt-1 font-sans text-sm text-brand-slate">
-                    Interest Rate:{' '}
-                    <span className="font-bold text-brand-champagne">
-                      {option.interestRate}%
-                    </span>
-                    <span className="text-brand-slate/70">
-                      {' '}
-                      · {option.termMonths / 12}-yr term
-                    </span>
-                  </p>
-                </div>
-                <div className="text-right">
-                  <p className="font-sans text-sm font-semibold text-brand-navy">
-                    $
-                    {option.monthlyPayment.toLocaleString('en-US', {
-                      minimumFractionDigits: 2,
-                      maximumFractionDigits: 2,
-                    })}{' '}
-                    /mo
-                  </p>
-                  <p className="mt-1 font-sans text-xs text-brand-slate">
-                    Est. APR: {option.apr}%
-                  </p>
-                </div>
+        {productId === 'heloc' && (
+          <>
+            <div className="field-grid">
+              <MoneyField
+                label="Property value"
+                value={propertyValue}
+                onChange={setPropertyValue}
+              />
+              <MoneyField
+                label="First mortgage balance"
+                value={currentBalance}
+                onChange={setCurrentBalance}
+              />
+            </div>
+            <div className="extra-box">
+              <p className="extra-box__title">HELOC line &amp; draw</p>
+              <div className="field-grid">
+                <MoneyField
+                  label="Requested HELOC line"
+                  value={helocLine}
+                  onChange={(value) => {
+                    setHelocLine(value);
+                    if (helocDraw > value) setHelocDraw(value);
+                  }}
+                />
+                <MoneyField
+                  label="Amount to draw now"
+                  value={helocDraw}
+                  onChange={setHelocDraw}
+                />
               </div>
-            ))}
+              <p className="computed-line">
+                Combined LTV {Math.round(derivedCltv * 100)}% · Typical max line $
+                {formatUsd(maxHelocLine)}
+              </p>
+            </div>
+          </>
+        )}
+
+        <div className="stack-field">
+          <div className="credit-head">
+            <span className="field-label" style={{ marginBottom: 0 }}>
+              Credit score: {creditScore}
+            </span>
+          </div>
+          <input
+            className="credit-slider"
+            type="range"
+            min={580}
+            max={820}
+            step={5}
+            value={creditScore}
+            onChange={(event) => setCreditScore(Number(event.target.value))}
+            aria-label="Credit score"
+          />
+          <div className="credit-range">
+            <span>580</span>
+            <span>820</span>
           </div>
         </div>
-      )}
-    </div>
+
+        {product.termOptions.length > 0 && productId !== 'heloc' && (
+          <div className="stack-field">
+            <label>
+              <span className="field-label">Term (years)</span>
+              <select
+                className="select-input"
+                value={termMonths}
+                onChange={(event) => setTermMonths(Number(event.target.value))}
+              >
+                {product.termOptions.map((option) => (
+                  <option key={option.value} value={option.value}>
+                    {option.label}
+                  </option>
+                ))}
+              </select>
+            </label>
+          </div>
+        )}
+
+        <div className="stack-field">
+          <p className="field-label">Occupancy</p>
+          <div
+            className="occupancy-grid"
+            style={{
+              gridTemplateColumns: `repeat(${occupancyChoices.length}, minmax(0, 1fr))`,
+            }}
+          >
+            {occupancyChoices.map((item) => (
+              <button
+                key={item.id}
+                type="button"
+                className={`choice-btn${occupancy === item.id ? ' is-active' : ''}`}
+                onClick={() => setOccupancy(item.id)}
+              >
+                {item.label}
+              </button>
+            ))}
+          </div>
+          {productId === 'fha' && (
+            <p className="computed-line">FHA financing requires owner occupancy.</p>
+          )}
+        </div>
+
+        <div className="stack-field">
+          <label>
+            <span className="field-label">Property address</span>
+            <UsAddressInput
+              value={propertyAddress}
+              onChange={setPropertyAddress}
+              className={ADDRESS_CLASS}
+            />
+          </label>
+        </div>
+      </div>
+
+      <aside className="quote-card" aria-live="polite">
+        {error && products.length === 0 ? (
+          <div className="quote-card__empty">{error}</div>
+        ) : loading && !quote ? (
+          <div className="quote-card__empty">Loading live pricing…</div>
+        ) : quote ? (
+          <>
+            <header className="quote-card__header">
+              <div className="quote-card__top">
+                <span className="quote-card__badge">
+                  <svg viewBox="0 0 16 16" fill="none" aria-hidden="true">
+                    <circle cx="8" cy="8" r="7" stroke="currentColor" strokeWidth="1.6" />
+                    <path
+                      d="M4.6 8.2 6.8 10.3 11.4 5.6"
+                      stroke="currentColor"
+                      strokeWidth="1.6"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    />
+                  </svg>
+                  Best-fit quote
+                </span>
+                <span className="quote-card__live">{liveLabel}</span>
+              </div>
+              <h3 className="quote-card__product">{quote.productName}</h3>
+              <div>
+                <span className="quote-card__rate-label">Rate</span>
+                <span className="quote-card__rate">{formatRate(quote.interestRate)}</span>
+                <p className="quote-card__apr">APR {formatRate(quote.apr)}</p>
+              </div>
+            </header>
+
+            <div className="quote-card__body">
+              <div className="quote-card__payment">
+                <p className="quote-card__payment-label">Estimated monthly payment</p>
+                <p className="quote-card__payment-amount">
+                  ${formatUsd(Math.round(quote.totalMonthly))}
+                </p>
+                <p className="quote-card__payment-note">{quote.paymentNote}</p>
+                <svg
+                  className="quote-card__chart"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  aria-hidden="true"
+                >
+                  <path
+                    d="M3 16.5 8.2 11l3.6 3.2L21 6.5"
+                    stroke="currentColor"
+                    strokeWidth="1.8"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
+                  <path
+                    d="M15 6.5h6v6"
+                    stroke="currentColor"
+                    strokeWidth="1.8"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
+                </svg>
+              </div>
+
+              <div className="quote-card__metrics">
+                {quote.metrics.map((metric) => (
+                  <div key={metric.label} className="quote-metric">
+                    <div className="quote-metric__label">{metric.label}</div>
+                    <div className="quote-metric__value">{metric.value}</div>
+                    {metric.hint ? (
+                      <div className="quote-metric__hint">{metric.hint}</div>
+                    ) : null}
+                  </div>
+                ))}
+              </div>
+
+              <a className="quote-card__cta" href={consultationHref}>
+                Lock This Rate — Request Consultation
+              </a>
+              <p className="quote-card__disclaimer">
+                Rates are estimates for illustration only and are not a commitment to
+                lend. Final pricing is subject to credit, property, occupancy,
+                documentation, and investor underwriting guidelines. Equal Housing
+                Lender.
+              </p>
+            </div>
+          </>
+        ) : (
+          <div className="quote-card__empty">Enter a scenario to see live pricing.</div>
+        )}
+      </aside>
+    </section>
   );
 }
