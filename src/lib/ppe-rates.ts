@@ -3,6 +3,22 @@
  * Calculator uses these cached rates to compute monthly payments locally.
  */
 
+import {
+  PROPERTY_TYPE_OPTIONS,
+  escrowWaiverRateAdjustment,
+  firstTimeBuyerRateAdjustment,
+  jumboRateAdjustment,
+  lockDaysRateAdjustment,
+  propertyTypeRateAdjustment,
+  unitsRateAdjustment,
+  type LockDays,
+  type LoanProductId,
+  type Occupancy,
+  type PropertyType,
+} from "@/lib/ppe-scenario";
+
+export type { LoanProductId, Occupancy } from "@/lib/ppe-scenario";
+
 export const PPE_CACHE_TTL_MS = 24 * 60 * 60 * 1000;
 
 export type RateDirection = "up" | "down" | "flat";
@@ -126,15 +142,6 @@ export const BASELINE_PPE_PRODUCTS: PpeProduct[] = [
   },
 ];
 
-export type LoanProductId =
-  | "conventional"
-  | "fha"
-  | "rate_term"
-  | "cash_out"
-  | "heloc";
-
-export type Occupancy = "primary" | "second" | "investment";
-
 export type TermOption = {
   value: number;
   label: string;
@@ -170,8 +177,7 @@ export const LOAN_PRODUCTS: LoanProductConfig[] = [
     defaultTermMonths: 360,
     termOptions: PURCHASE_TERMS,
     points: 1,
-    needed:
-      "Conventional purchase: purchase price, down payment, credit score, occupancy, term, and property address. PMI applies when LTV is above 80%.",
+    needed: "Conventional purchase scenario — Optimal Blue fields only, no personal information.",
     occupancyOptions: ["primary", "second", "investment"],
     interestOnly: false,
   },
@@ -182,8 +188,7 @@ export const LOAN_PRODUCTS: LoanProductConfig[] = [
     defaultTermMonths: 360,
     termOptions: PURCHASE_TERMS,
     points: 0,
-    needed:
-      "FHA purchase: purchase price, down payment (3.5% minimum), credit score, owner occupancy, term, and property address.",
+    needed: "FHA purchase scenario — Optimal Blue fields only, no personal information.",
     occupancyOptions: ["primary"],
     interestOnly: false,
   },
@@ -194,8 +199,7 @@ export const LOAN_PRODUCTS: LoanProductConfig[] = [
     defaultTermMonths: 360,
     termOptions: PURCHASE_TERMS,
     points: 1,
-    needed:
-      "Current property value, existing loan balance, credit score, occupancy, term, and property address.",
+    needed: "Rate-and-term refinance scenario — Optimal Blue fields only, no personal information.",
     occupancyOptions: ["primary", "second", "investment"],
     interestOnly: false,
   },
@@ -206,8 +210,7 @@ export const LOAN_PRODUCTS: LoanProductConfig[] = [
     defaultTermMonths: 360,
     termOptions: PURCHASE_TERMS,
     points: 1,
-    needed:
-      "Current property value, existing loan balance, cash-out amount, credit score, occupancy, term, and property address.",
+    needed: "Cash-out refinance scenario — Optimal Blue fields only, no personal information.",
     occupancyOptions: ["primary", "second", "investment"],
     interestOnly: false,
   },
@@ -218,8 +221,7 @@ export const LOAN_PRODUCTS: LoanProductConfig[] = [
     defaultTermMonths: 120,
     termOptions: HELOC_TERMS,
     points: 0,
-    needed:
-      "Current property value, first-mortgage balance, requested line amount, draw amount, credit score, occupancy, and property address.",
+    needed: "HELOC scenario — Optimal Blue fields only, no personal information.",
     occupancyOptions: ["primary", "second", "investment"],
     interestOnly: true,
   },
@@ -405,6 +407,9 @@ export type BestFitQuote = {
   cashToClose: number;
   interestOnly: boolean;
   boardName: string;
+  lockDays: number;
+  propertyType: PropertyType;
+  scenarioSummary: string;
   metrics: QuoteMetric[];
 };
 
@@ -421,9 +426,24 @@ export function buildBestFitQuote(input: {
   creditScore: number;
   termMonths: number;
   occupancy: Occupancy;
+  propertyType?: PropertyType;
+  units?: number;
+  lockDays?: LockDays;
+  propertyState?: string;
+  propertyZip?: string;
+  firstTimeHomebuyer?: boolean;
+  waiveEscrow?: boolean;
+  financeUpfrontMip?: boolean;
 }): BestFitQuote | null {
   const config = LOAN_PRODUCTS.find((item) => item.id === input.productId);
   if (!config) return null;
+
+  const propertyType = input.propertyType ?? "sfr";
+  const units = Math.max(1, Math.round(input.units || 1));
+  const lockDays = input.lockDays ?? 30;
+  const waiveEscrow = Boolean(input.waiveEscrow);
+  const firstTimeHomebuyer = Boolean(input.firstTimeHomebuyer);
+  const financeUpfrontMip = input.financeUpfrontMip !== false;
 
   const termMonths = input.termMonths > 0 ? input.termMonths : config.defaultTermMonths;
   const sourceId = sourceIdFor(config.id, termMonths);
@@ -459,7 +479,9 @@ export function buildBestFitQuote(input: {
     const baseLoan = Math.max(0, purchasePrice - down);
     if (config.id === "fha") {
       upfrontMip = roundMoney(baseLoan * 0.0175);
-      loanAmount = roundMoney(baseLoan + upfrontMip);
+      loanAmount = financeUpfrontMip
+        ? roundMoney(baseLoan + upfrontMip)
+        : roundMoney(baseLoan);
     } else {
       loanAmount = roundMoney(baseLoan);
     }
@@ -492,7 +514,13 @@ export function buildBestFitQuote(input: {
       extraSpread +
       creditScoreRateAdjustment(input.creditScore) +
       occupancyRateAdjustment(occupancy, config.id) +
-      ltvAdj,
+      ltvAdj +
+      propertyTypeRateAdjustment(propertyType) +
+      lockDaysRateAdjustment(lockDays) +
+      unitsRateAdjustment(units) +
+      escrowWaiverRateAdjustment(waiveEscrow && config.id !== "fha") +
+      firstTimeBuyerRateAdjustment(config.id, firstTimeHomebuyer) +
+      jumboRateAdjustment(loanAmount, config.id),
   );
   const apr = roundRate(interestRate + source.aprSpread);
 
@@ -521,6 +549,9 @@ export function buildBestFitQuote(input: {
   if (config.id === "conventional" || config.id === "fha") {
     const down = Math.min(Math.max(0, input.downPayment), purchasePrice);
     cashToClose = roundMoney(down + pointsCost + closingCosts);
+    if (config.id === "fha" && !financeUpfrontMip) {
+      cashToClose = roundMoney(cashToClose + upfrontMip);
+    }
   } else if (config.id === "cash_out") {
     cashToClose = roundMoney((cashOutAmount ?? 0) - pointsCost - closingCosts);
   } else {
@@ -535,6 +566,18 @@ export function buildBestFitQuote(input: {
           ? "Principal, interest & MIP"
           : "Principal, interest & PMI"
         : "Principal & interest";
+
+  const propertyTypeLabel =
+    PROPERTY_TYPE_OPTIONS.find((item) => item.id === propertyType)?.label ??
+    propertyType;
+  const scenarioSummary = [
+    `${lockDays}-day lock`,
+    propertyTypeLabel,
+    `${units} unit${units > 1 ? "s" : ""}`,
+    [input.propertyState, input.propertyZip].filter(Boolean).join(" "),
+  ]
+    .filter(Boolean)
+    .join(" · ");
 
   const metrics = metricsForProduct({
     config,
@@ -553,6 +596,7 @@ export function buildBestFitQuote(input: {
     helocLine,
     helocDraw,
     currentBalance: input.currentBalance,
+    financeUpfrontMip,
   });
 
   return {
@@ -575,6 +619,9 @@ export function buildBestFitQuote(input: {
     cashToClose,
     interestOnly: config.interestOnly,
     boardName: source.product,
+    lockDays,
+    propertyType,
+    scenarioSummary,
     metrics,
   };
 }
@@ -596,15 +643,16 @@ function metricsForProduct(input: {
   helocLine: number | null;
   helocDraw: number | null;
   currentBalance: number;
+  financeUpfrontMip: boolean;
 }): QuoteMetric[] {
   const { config } = input;
 
   if (config.id === "fha") {
     return [
-      { label: "Loan amount", value: usd(input.loanAmount), hint: "Includes UFMIP" },
+      { label: "Loan amount", value: usd(input.loanAmount), hint: input.financeUpfrontMip ? "Includes UFMIP" : "Base loan" },
       { label: "LTV", value: pct(input.ltv), hint: `Max ${usd(input.maxLoanAmount)}` },
       { label: "Term", value: formatTerm(input.termMonths) },
-      { label: "UFMIP", value: usd(input.upfrontMip), hint: "1.75% financed" },
+      { label: "UFMIP", value: usd(input.upfrontMip), hint: input.financeUpfrontMip ? "1.75% financed" : "Paid in cash" },
       { label: "Monthly MIP", value: usd(input.monthlyInsurance) },
       { label: "Cash to close", value: usd(input.cashToClose) },
     ];
