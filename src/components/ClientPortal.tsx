@@ -67,9 +67,9 @@ export default function ClientPortal() {
             <p className="pricing-hero__kicker">Mortgage pricing engine</p>
             <h1 className="pricing-hero__title">Price any property loan in seconds.</h1>
             <p className="pricing-hero__lede">
-              Instant quotes for conventional, FHA, rate-and-term refinance,
-              cash-out refinance, and HELOC. Enter the details for your loan type
-              and the best-fit quote updates in real time — no obligation.
+              Optimal Blue PPE scenario pricing for conventional, FHA, rate-and-term
+              refinance, cash-out refinance, and HELOC. Enter only the loan parameters
+              required for your loan type — 100% anonymous without personal information.
             </p>
             <div className="pricing-hero__features">
               <div className="pricing-hero__feature">

@@ -517,6 +517,231 @@ body {
   color: var(--brand-slate);
 }
 
+.percent-input {
+  display: flex;
+  align-items: center;
+  padding: 0 0.85rem;
+  height: 2.7rem;
+  width: 100%;
+  border: 1px solid var(--brand-border);
+  background: var(--brand-white);
+  border-radius: 5px;
+  color: var(--brand-navy);
+  font-size: 0.95rem;
+  outline: none;
+}
+
+.percent-input input {
+  border: 0;
+  background: transparent;
+  width: 100%;
+  height: 2.7rem;
+  color: inherit;
+  font: inherit;
+  outline: none;
+}
+
+.percent-input span {
+  color: var(--brand-slate);
+  margin-left: 0.35rem;
+  font-weight: 600;
+}
+
+.percent-input:focus-within {
+  border-color: var(--brand-navy);
+  box-shadow: 0 0 0 3px rgba(26, 43, 75, 0.08);
+}
+
+.ppe-badge-row {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.5rem 0.85rem;
+  margin-bottom: 0.65rem;
+}
+
+.ppe-pill {
+  display: inline-flex;
+  align-items: center;
+  background: var(--brand-navy);
+  color: var(--brand-white);
+  font-size: 0.64rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  padding: 0.25rem 0.6rem;
+  border-radius: 4px;
+}
+
+.ppe-pill-sub {
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: var(--brand-gold);
+}
+
+.ppe-info-box {
+  background: var(--brand-canvas);
+  border: 1px solid rgba(26, 43, 75, 0.08);
+  border-radius: 6px;
+  padding: 0.85rem 1rem;
+  margin: 0.85rem 0 1.25rem;
+}
+
+.ppe-info-box__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 0.35rem;
+}
+
+.ppe-info-box__badge {
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--brand-navy);
+}
+
+.ppe-info-box__desc {
+  margin: 0;
+  font-size: 0.78rem;
+  line-height: 1.45;
+  color: var(--brand-slate);
+}
+
+.scenario-section {
+  background: var(--brand-white);
+  padding: 0.35rem 0 0.85rem;
+}
+
+.quick-pill-row {
+  display: flex;
+  gap: 0.35rem;
+  margin-top: 0.35rem;
+  flex-wrap: wrap;
+}
+
+.quick-pill {
+  border: 1px solid var(--brand-border);
+  background: var(--brand-canvas);
+  color: var(--brand-slate);
+  font-size: 0.66rem;
+  font-weight: 600;
+  padding: 0.2rem 0.45rem;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.quick-pill:hover {
+  background: var(--brand-navy);
+  border-color: var(--brand-navy);
+  color: var(--brand-white);
+}
+
+.scenario-toggles {
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+  margin-top: 0.85rem;
+  padding: 0.65rem 0.85rem;
+  background: var(--brand-canvas);
+  border-radius: 6px;
+}
+
+.checkbox-label {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  font-size: 0.78rem;
+  color: var(--brand-navy);
+  cursor: pointer;
+  user-select: none;
+}
+
+.checkbox-label input[type="checkbox"] {
+  width: 1rem;
+  height: 1rem;
+  accent-color: var(--brand-navy);
+  cursor: pointer;
+}
+
+.quote-highlight-banner {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.65rem;
+  background: #ecfdf5;
+  border: 1px solid #a7f3d0;
+  color: #065f46;
+  padding: 0.75rem 0.9rem;
+  border-radius: 6px;
+  margin-bottom: 1rem;
+  font-size: 0.82rem;
+  line-height: 1.35;
+}
+
+.quote-highlight-banner strong {
+  display: block;
+  font-size: 0.92rem;
+  color: #047857;
+}
+
+.quote-highlight-banner p {
+  margin: 0.15rem 0 0;
+  font-size: 0.72rem;
+  color: #065f46;
+}
+
+.quote-highlight-banner__icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.3rem;
+  height: 1.3rem;
+  border-radius: 50%;
+  background: #10b981;
+  color: #ffffff;
+  font-weight: 700;
+  font-size: 0.75rem;
+  flex-shrink: 0;
+}
+
+.quote-highlight-banner--gold {
+  background: #fffbeb;
+  border-color: #fde68a;
+  color: #92400e;
+}
+
+.quote-highlight-banner--gold strong {
+  color: #b45309;
+}
+
+.quote-highlight-banner--gold p {
+  color: #92400e;
+}
+
+.quote-highlight-banner--gold .quote-highlight-banner__icon {
+  background: #f59e0b;
+}
+
+.quote-highlight-banner--navy {
+  background: #eff6ff;
+  border-color: #bfdbfe;
+  color: #1e40af;
+}
+
+.quote-highlight-banner--navy strong {
+  color: #1d4ed8;
+}
+
+.quote-highlight-banner--navy p {
+  color: #1e40af;
+}
+
+.quote-highlight-banner--navy .quote-highlight-banner__icon {
+  background: var(--brand-navy);
+}
+
 .computed-line {
   margin: 0.45rem 0 0;
   font-size: 0.78rem;

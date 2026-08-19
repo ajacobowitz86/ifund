@@ -4,20 +4,43 @@
  */
 
 import {
+  CASH_OUT_PURPOSE_OPTIONS,
+  LOCK_DAY_OPTIONS,
   PROPERTY_TYPE_OPTIONS,
+  SUBORDINATE_FINANCING_OPTIONS,
+  allowedPropertyTypes,
   escrowWaiverRateAdjustment,
   firstTimeBuyerRateAdjustment,
   jumboRateAdjustment,
   lockDaysRateAdjustment,
+  minDownPaymentPercent,
   propertyTypeRateAdjustment,
-  unitsRateAdjustment,
+  type CashOutPurpose,
   type LockDays,
   type LoanProductId,
   type Occupancy,
   type PropertyType,
+  type SubordinateFinancing,
 } from "@/lib/ppe-scenario";
 
-export type { LoanProductId, Occupancy } from "@/lib/ppe-scenario";
+export type {
+  CashOutPurpose,
+  LockDays,
+  LoanProductId,
+  Occupancy,
+  PropertyType,
+  SubordinateFinancing,
+} from "@/lib/ppe-scenario";
+
+export {
+  CASH_OUT_PURPOSE_OPTIONS,
+  LOCK_DAY_OPTIONS,
+  PPE_REQUIRED_FIELDS,
+  PROPERTY_TYPE_OPTIONS,
+  SUBORDINATE_FINANCING_OPTIONS,
+  allowedPropertyTypes,
+  minDownPaymentPercent,
+} from "@/lib/ppe-scenario";
 
 export const PPE_CACHE_TTL_MS = 24 * 60 * 60 * 1000;
 
@@ -160,13 +183,19 @@ export type LoanProductConfig = {
 };
 
 const PURCHASE_TERMS: TermOption[] = [
-  { value: 360, label: "30-year" },
-  { value: 240, label: "20-year" },
-  { value: 180, label: "15-year" },
+  { value: 360, label: "30-year fixed" },
+  { value: 240, label: "20-year fixed" },
+  { value: 180, label: "15-year fixed" },
+];
+
+const REFI_TERMS: TermOption[] = [
+  { value: 360, label: "30-year fixed" },
+  { value: 240, label: "20-year fixed" },
+  { value: 180, label: "15-year fixed" },
 ];
 
 const HELOC_TERMS: TermOption[] = [
-  { value: 120, label: "10-year draw / 20-year repay" },
+  { value: 120, label: "10-year interest-only draw / 20-year repay" },
 ];
 
 export const LOAN_PRODUCTS: LoanProductConfig[] = [
@@ -177,7 +206,8 @@ export const LOAN_PRODUCTS: LoanProductConfig[] = [
     defaultTermMonths: 360,
     termOptions: PURCHASE_TERMS,
     points: 1,
-    needed: "Conventional purchase scenario — Optimal Blue fields only, no personal information.",
+    needed:
+      "Purchase scenario (No personal info): Purchase price, down payment, credit score, property type, occupancy, and loan term.",
     occupancyOptions: ["primary", "second", "investment"],
     interestOnly: false,
   },
@@ -188,7 +218,8 @@ export const LOAN_PRODUCTS: LoanProductConfig[] = [
     defaultTermMonths: 360,
     termOptions: PURCHASE_TERMS,
     points: 0,
-    needed: "FHA purchase scenario — Optimal Blue fields only, no personal information.",
+    needed:
+      "FHA purchase scenario (No personal info): Purchase price, min 3.5% down payment, credit score, owner-occupied primary residence.",
     occupancyOptions: ["primary"],
     interestOnly: false,
   },
@@ -197,9 +228,10 @@ export const LOAN_PRODUCTS: LoanProductConfig[] = [
     label: "Rate & Term Refinance",
     group: "refinance",
     defaultTermMonths: 360,
-    termOptions: PURCHASE_TERMS,
+    termOptions: REFI_TERMS,
     points: 1,
-    needed: "Rate-and-term refinance scenario — Optimal Blue fields only, no personal information.",
+    needed:
+      "Refinance scenario (Different from purchase): Property value, current loan payoff balance, current interest rate to compute savings, and 2nd mortgage status.",
     occupancyOptions: ["primary", "second", "investment"],
     interestOnly: false,
   },
@@ -208,9 +240,10 @@ export const LOAN_PRODUCTS: LoanProductConfig[] = [
     label: "Cash-Out Refinance",
     group: "refinance",
     defaultTermMonths: 360,
-    termOptions: PURCHASE_TERMS,
+    termOptions: REFI_TERMS,
     points: 1,
-    needed: "Cash-out refinance scenario — Optimal Blue fields only, no personal information.",
+    needed:
+      "Cash-out scenario (Different from purchase): Property value, current loan balance to payoff, desired cash-out in pocket, cash-out purpose, and max LTV limits.",
     occupancyOptions: ["primary", "second", "investment"],
     interestOnly: false,
   },
@@ -221,7 +254,8 @@ export const LOAN_PRODUCTS: LoanProductConfig[] = [
     defaultTermMonths: 120,
     termOptions: HELOC_TERMS,
     points: 0,
-    needed: "HELOC scenario — Optimal Blue fields only, no personal information.",
+    needed:
+      "HELOC 2nd lien scenario (Keeps 1st mortgage): Property value, 1st mortgage balance & rate, requested line amount, and initial draw amount.",
     occupancyOptions: ["primary", "second", "investment"],
     interestOnly: true,
   },
@@ -240,7 +274,7 @@ export const LOAN_PRODUCT_GROUPS: Array<{
 export const OCCUPANCY_OPTIONS: Array<{ id: Occupancy; label: string }> = [
   { id: "primary", label: "Primary residence" },
   { id: "second", label: "Second home" },
-  { id: "investment", label: "Investment" },
+  { id: "investment", label: "Investment property" },
 ];
 
 export function directionFromChange(change: number): RateDirection {
@@ -410,6 +444,10 @@ export type BestFitQuote = {
   lockDays: number;
   propertyType: PropertyType;
   scenarioSummary: string;
+  monthlySavings: number | null;
+  oldMonthlyPayment: number | null;
+  netCashOut: number | null;
+  blendedRate: number | null;
   metrics: QuoteMetric[];
 };
 
@@ -420,14 +458,17 @@ export function buildBestFitQuote(input: {
   propertyValue: number;
   downPayment: number;
   currentBalance: number;
+  currentRate?: number;
   cashOutAmount: number;
+  cashOutPurpose?: CashOutPurpose;
+  subordinateFinancing?: SubordinateFinancing;
   helocLine: number;
   helocDraw: number;
+  firstLienRate?: number;
   creditScore: number;
   termMonths: number;
   occupancy: Occupancy;
   propertyType?: PropertyType;
-  units?: number;
   lockDays?: LockDays;
   propertyState?: string;
   propertyZip?: string;
@@ -439,11 +480,12 @@ export function buildBestFitQuote(input: {
   if (!config) return null;
 
   const propertyType = input.propertyType ?? "sfr";
-  const units = Math.max(1, Math.round(input.units || 1));
   const lockDays = input.lockDays ?? 30;
   const waiveEscrow = Boolean(input.waiveEscrow);
   const firstTimeHomebuyer = Boolean(input.firstTimeHomebuyer);
   const financeUpfrontMip = input.financeUpfrontMip !== false;
+  const currentRate = input.currentRate ?? 7.25;
+  const firstLienRate = input.firstLienRate ?? 3.50;
 
   const termMonths = input.termMonths > 0 ? input.termMonths : config.defaultTermMonths;
   const sourceId = sourceIdFor(config.id, termMonths);
@@ -517,7 +559,6 @@ export function buildBestFitQuote(input: {
       ltvAdj +
       propertyTypeRateAdjustment(propertyType) +
       lockDaysRateAdjustment(lockDays) +
-      unitsRateAdjustment(units) +
       escrowWaiverRateAdjustment(waiveEscrow && config.id !== "fha") +
       firstTimeBuyerRateAdjustment(config.id, firstTimeHomebuyer) +
       jumboRateAdjustment(loanAmount, config.id),
@@ -546,6 +587,7 @@ export function buildBestFitQuote(input: {
   const maxLoanAmount = roundMoney(propertyValue * maxLtv);
 
   let cashToClose = 0;
+  let netCashOut: number | null = null;
   if (config.id === "conventional" || config.id === "fha") {
     const down = Math.min(Math.max(0, input.downPayment), purchasePrice);
     cashToClose = roundMoney(down + pointsCost + closingCosts);
@@ -553,9 +595,35 @@ export function buildBestFitQuote(input: {
       cashToClose = roundMoney(cashToClose + upfrontMip);
     }
   } else if (config.id === "cash_out") {
-    cashToClose = roundMoney((cashOutAmount ?? 0) - pointsCost - closingCosts);
+    netCashOut = roundMoney((cashOutAmount ?? 0) - pointsCost - closingCosts);
+    cashToClose = netCashOut;
   } else {
     cashToClose = roundMoney(pointsCost + closingCosts);
+  }
+
+  // Refinance savings math
+  let monthlySavings: number | null = null;
+  let oldMonthlyPayment: number | null = null;
+  if (config.id === "rate_term") {
+    oldMonthlyPayment = calculateMonthlyPayment(
+      input.currentBalance,
+      currentRate,
+      360,
+    );
+    monthlySavings = roundMoney(Math.max(0, oldMonthlyPayment - totalMonthly));
+  }
+
+  // HELOC blended rate math
+  let blendedRate: number | null = null;
+  if (config.id === "heloc") {
+    const firstBal = Math.max(0, input.currentBalance);
+    const drawn = helocDraw ?? 0;
+    const totalDebt = firstBal + drawn;
+    if (totalDebt > 0) {
+      blendedRate = roundRate(
+        (firstBal * firstLienRate + drawn * interestRate) / totalDebt,
+      );
+    }
   }
 
   const paymentNote =
@@ -573,7 +641,6 @@ export function buildBestFitQuote(input: {
   const scenarioSummary = [
     `${lockDays}-day lock`,
     propertyTypeLabel,
-    `${units} unit${units > 1 ? "s" : ""}`,
     [input.propertyState, input.propertyZip].filter(Boolean).join(" "),
   ]
     .filter(Boolean)
@@ -593,10 +660,13 @@ export function buildBestFitQuote(input: {
     monthlyInsurance,
     pmiAnnual,
     cashOutAmount,
+    netCashOut,
     helocLine,
     helocDraw,
     currentBalance: input.currentBalance,
     financeUpfrontMip,
+    monthlySavings,
+    blendedRate,
   });
 
   return {
@@ -622,6 +692,10 @@ export function buildBestFitQuote(input: {
     lockDays,
     propertyType,
     scenarioSummary,
+    monthlySavings,
+    oldMonthlyPayment,
+    netCashOut,
+    blendedRate,
     metrics,
   };
 }
@@ -640,10 +714,13 @@ function metricsForProduct(input: {
   monthlyInsurance: number;
   pmiAnnual: number;
   cashOutAmount: number | null;
+  netCashOut: number | null;
   helocLine: number | null;
   helocDraw: number | null;
   currentBalance: number;
   financeUpfrontMip: boolean;
+  monthlySavings: number | null;
+  blendedRate: number | null;
 }): QuoteMetric[] {
   const { config } = input;
 
@@ -675,27 +752,31 @@ function metricsForProduct(input: {
 
   if (config.id === "rate_term") {
     return [
-      { label: "Loan amount", value: usd(input.loanAmount) },
+      { label: "New loan", value: usd(input.loanAmount) },
       { label: "LTV", value: pct(input.ltv), hint: `Max ${usd(input.maxLoanAmount)}` },
       { label: "Term", value: formatTerm(input.termMonths) },
+      {
+        label: "Savings",
+        value: input.monthlySavings && input.monthlySavings > 0 ? `${usd(input.monthlySavings)}/mo` : "Rate drop",
+        hint: "vs current rate",
+      },
       { label: "Points", value: input.points.toFixed(2), hint: usd(input.pointsCost) },
-      { label: "Closing costs", value: usd(input.cashToClose) },
-      { label: "Payoff", value: usd(input.currentBalance), hint: "Current balance" },
+      { label: "Payoff", value: usd(input.currentBalance), hint: "Current 1st lien" },
     ];
   }
 
   if (config.id === "cash_out") {
     return [
-      { label: "Loan amount", value: usd(input.loanAmount) },
+      { label: "Total new loan", value: usd(input.loanAmount) },
       { label: "LTV", value: pct(input.ltv), hint: `Max ${usd(input.maxLoanAmount)}` },
-      { label: "Term", value: formatTerm(input.termMonths) },
       { label: "Cash out", value: usd(input.cashOutAmount ?? 0) },
-      { label: "Points", value: input.points.toFixed(2), hint: usd(input.pointsCost) },
       {
         label: "Net cash out",
-        value: usd(input.cashToClose),
-        hint: "After points & costs",
+        value: usd(input.netCashOut ?? 0),
+        hint: "After points & fees",
       },
+      { label: "Points", value: input.points.toFixed(2), hint: usd(input.pointsCost) },
+      { label: "Payoff", value: usd(input.currentBalance), hint: "Existing balance" },
     ];
   }
 
@@ -709,8 +790,12 @@ function metricsForProduct(input: {
     },
     { label: "Draw now", value: usd(input.helocDraw ?? 0) },
     { label: "Pay type", value: "Interest only", hint: "On amount drawn" },
-    { label: "Available", value: usd(available), hint: "Remaining line" },
-    { label: "First lien", value: usd(input.currentBalance) },
+    {
+      label: "Blended rate",
+      value: input.blendedRate ? `${input.blendedRate.toFixed(3)}%` : "—",
+      hint: "1st + HELOC",
+    },
+    { label: "Available", value: usd(available), hint: "Remaining credit" },
   ];
 }
 
