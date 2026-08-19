@@ -4,8 +4,8 @@ import { useMemo } from 'react';
 import { usePpeRates } from '@/hooks/usePpeRates';
 
 const DISPLAY_RATES = [
-  { id: 'conv-30', sourceId: 'conv-30', label: 'Conventional 30-yr' },
-  { id: 'conv-15', sourceId: 'conv-15', label: 'Conventional 15-yr' },
+  { id: 'conv-30', sourceId: 'conv-30', label: 'Conventional Mortgage 30-yr' },
+  { id: 'conv-15', sourceId: 'conv-15', label: 'Conventional Mortgage 15-yr' },
   { id: 'fha-30', sourceId: 'fha-30', label: 'FHA 30-yr' },
   { id: 'fha-15', sourceId: 'fha-15', label: 'FHA 15-yr' },
   { id: 'rate-term', sourceId: 'conv-refi-30', label: 'Rate & Term Refi' },

@@ -143,6 +143,7 @@ export type TermOption = {
 export type LoanProductConfig = {
   id: LoanProductId;
   label: string;
+  group: "purchase" | "refinance" | "equity";
   defaultTermMonths: number;
   termOptions: TermOption[];
   points: number;
@@ -165,28 +166,31 @@ export const LOAN_PRODUCTS: LoanProductConfig[] = [
   {
     id: "conventional",
     label: "Conventional Mortgage",
+    group: "purchase",
     defaultTermMonths: 360,
     termOptions: PURCHASE_TERMS,
     points: 1,
     needed:
-      "Purchase price, down payment, credit score, occupancy, term, and property address.",
+      "Conventional purchase: purchase price, down payment, credit score, occupancy, term, and property address. PMI applies when LTV is above 80%.",
     occupancyOptions: ["primary", "second", "investment"],
     interestOnly: false,
   },
   {
     id: "fha",
     label: "FHA Mortgage",
+    group: "purchase",
     defaultTermMonths: 360,
     termOptions: PURCHASE_TERMS,
     points: 0,
     needed:
-      "Purchase price, down payment (3.5% minimum), credit score, owner occupancy, term, and property address.",
+      "FHA purchase: purchase price, down payment (3.5% minimum), credit score, owner occupancy, term, and property address.",
     occupancyOptions: ["primary"],
     interestOnly: false,
   },
   {
     id: "rate_term",
     label: "Rate & Term Refinance",
+    group: "refinance",
     defaultTermMonths: 360,
     termOptions: PURCHASE_TERMS,
     points: 1,
@@ -198,6 +202,7 @@ export const LOAN_PRODUCTS: LoanProductConfig[] = [
   {
     id: "cash_out",
     label: "Cash-Out Refinance",
+    group: "refinance",
     defaultTermMonths: 360,
     termOptions: PURCHASE_TERMS,
     points: 1,
@@ -209,6 +214,7 @@ export const LOAN_PRODUCTS: LoanProductConfig[] = [
   {
     id: "heloc",
     label: "HELOC",
+    group: "equity",
     defaultTermMonths: 120,
     termOptions: HELOC_TERMS,
     points: 0,
@@ -217,6 +223,16 @@ export const LOAN_PRODUCTS: LoanProductConfig[] = [
     occupancyOptions: ["primary", "second", "investment"],
     interestOnly: true,
   },
+];
+
+export const LOAN_PRODUCT_GROUPS: Array<{
+  id: LoanProductConfig["group"];
+  label: string;
+  productIds: LoanProductId[];
+}> = [
+  { id: "purchase", label: "Purchase", productIds: ["conventional", "fha"] },
+  { id: "refinance", label: "Refinance", productIds: ["rate_term", "cash_out"] },
+  { id: "equity", label: "Home equity", productIds: ["heloc"] },
 ];
 
 export const OCCUPANCY_OPTIONS: Array<{ id: Occupancy; label: string }> = [
@@ -388,6 +404,7 @@ export type BestFitQuote = {
   pointsCost: number;
   cashToClose: number;
   interestOnly: boolean;
+  boardName: string;
   metrics: QuoteMetric[];
 };
 
@@ -557,6 +574,7 @@ export function buildBestFitQuote(input: {
     pointsCost,
     cashToClose,
     interestOnly: config.interestOnly,
+    boardName: source.product,
     metrics,
   };
 }

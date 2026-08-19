@@ -5,6 +5,7 @@ import UsAddressInput from '@/components/UsAddressInput';
 import { usePpeRates } from '@/hooks/usePpeRates';
 import {
   LOAN_PRODUCTS,
+  LOAN_PRODUCT_GROUPS,
   OCCUPANCY_OPTIONS,
   buildBestFitQuote,
   maxLtvFor,
@@ -187,16 +188,28 @@ export default function LoanPricingForm() {
         </p>
 
         <p className="field-label">Loan product</p>
-        <div className="product-grid">
-          {LOAN_PRODUCTS.map((item) => (
-            <button
-              key={item.id}
-              type="button"
-              className={`choice-btn${productId === item.id ? ' is-active' : ''}`}
-              onClick={() => selectProduct(item.id)}
-            >
-              {item.label}
-            </button>
+        <div className="product-groups">
+          {LOAN_PRODUCT_GROUPS.map((group) => (
+            <div key={group.id} className="product-group">
+              <p className="product-group__label">{group.label}</p>
+              <div className="product-grid">
+                {group.productIds.map((id) => {
+                  const item = LOAN_PRODUCTS.find((product) => product.id === id);
+                  if (!item) return null;
+                  return (
+                    <button
+                      key={item.id}
+                      type="button"
+                      className={`choice-btn${productId === item.id ? ' is-active' : ''}`}
+                      aria-pressed={productId === item.id}
+                      onClick={() => selectProduct(item.id)}
+                    >
+                      {item.label}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
           ))}
         </div>
         <p className="scenario-hint">{product.needed}</p>
@@ -220,6 +233,7 @@ export default function LoanPricingForm() {
             </div>
             <p className="computed-line">
               Loan amount ${formatUsd(derivedLoan)} · {Math.round(derivedLtv * 100)}% LTV
+              {productId === 'conventional' ? ' · Conventional' : ''}
               {productId === 'fha' ? ` · FHA minimum down $${formatUsd(minFhaDown)}` : ''}
             </p>
           </>
@@ -409,6 +423,7 @@ export default function LoanPricingForm() {
                 <span className="quote-card__live">{liveLabel}</span>
               </div>
               <h3 className="quote-card__product">{quote.productName}</h3>
+              <p className="quote-card__board">{quote.boardName}</p>
               <div>
                 <span className="quote-card__rate-label">Rate</span>
                 <span className="quote-card__rate">{formatRate(quote.interestRate)}</span>

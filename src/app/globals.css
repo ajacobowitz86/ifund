@@ -351,11 +351,26 @@ body {
   gap: 0.85rem 1rem;
 }
 
+.product-groups {
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+  margin-bottom: 0.25rem;
+}
+
+.product-group__label {
+  margin: 0 0 0.4rem;
+  font-size: 0.68rem;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--brand-slate);
+}
+
 .product-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 0.55rem;
-  margin-bottom: 1.15rem;
 }
 
 .choice-btn {
@@ -569,11 +584,18 @@ body {
 }
 
 .quote-card__product {
-  margin: 0.7rem 0 0.85rem;
+  margin: 0.7rem 0 0;
   font-family: var(--font-brand-serif), ui-serif, Georgia, serif;
   font-size: 1.2rem;
   font-weight: 600;
   line-height: 1.25;
+}
+
+.quote-card__board {
+  margin: 0.28rem 0 0.85rem;
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--brand-gold);
 }
 
 .quote-card__rate-label {
