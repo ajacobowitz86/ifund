@@ -15,7 +15,6 @@ import {
   allowedPropertyTypes,
   buildBestFitQuote,
   maxLtvFor,
-  minDownPaymentPercent,
   type CashOutPurpose,
   type LockDays,
   type LoanProductId,
@@ -46,24 +45,29 @@ function MoneyField({
   value,
   onChange,
   placeholder,
+  helper,
 }: {
   label: string;
   value: number;
   onChange: (value: number) => void;
   placeholder?: string;
+  helper?: string;
 }) {
   return (
-    <label>
-      <span className="field-label">{label}</span>
-      <span className="money-input">
-        <span>$</span>
+    <label className="field-block">
+      <div className="field-label-row">
+        <span className="field-label">{label}</span>
+        {helper && <span className="field-helper">{helper}</span>}
+      </div>
+      <div className="money-input">
+        <span className="money-symbol">$</span>
         <input
           inputMode="numeric"
           placeholder={placeholder}
           value={value ? formatUsd(value) : ''}
           onChange={(event) => onChange(parseMoney(event.target.value))}
         />
-      </span>
+      </div>
     </label>
   );
 }
@@ -80,9 +84,9 @@ function PercentField({
   step?: number;
 }) {
   return (
-    <label>
+    <label className="field-block">
       <span className="field-label">{label}</span>
-      <span className="percent-input">
+      <div className="percent-input">
         <input
           type="number"
           step={step}
@@ -91,14 +95,14 @@ function PercentField({
           value={value || ''}
           onChange={(event) => onChange(parseFloat(event.target.value) || 0)}
         />
-        <span>%</span>
-      </span>
+        <span className="percent-symbol">%</span>
+      </div>
     </label>
   );
 }
 
 const ADDRESS_CLASS =
-  'w-full rounded-[5px] border border-[#e5e7eb] bg-white px-3.5 py-[0.7rem] font-sans text-[0.95rem] text-brand-navy outline-none';
+  'w-full rounded-[6px] border border-[#d1d5db] bg-white px-3.5 py-[0.7rem] font-sans text-[0.95rem] text-brand-navy outline-none focus:border-brand-navy focus:ring-2 focus:ring-brand-navy/10 transition-all';
 
 export default function LoanPricingForm() {
   const { products, loading, error } = usePpeRates();
@@ -133,6 +137,7 @@ export default function LoanPricingForm() {
   const [propertyType, setPropertyType] = useState<PropertyType>('sfr');
   const [lockDays, setLockDays] = useState<LockDays>(30);
   const [propertyAddress, setPropertyAddress] = useState('');
+  const [activeTab, setActiveTab] = useState<'quote' | 'breakdown'>('quote');
   const [now, setNow] = useState<Date | null>(null);
 
   const product = LOAN_PRODUCTS.find((item) => item.id === productId) ?? LOAN_PRODUCTS[0];
@@ -141,10 +146,10 @@ export default function LoanPricingForm() {
   const isRefi = productId === 'rate_term' || productId === 'cash_out';
   const isHeloc = productId === 'heloc';
 
-  const occupancyChoices = OCCUPANCY_OPTIONS.filter((item: { id: Occupancy; label: string }) =>
+  const occupancyChoices = OCCUPANCY_OPTIONS.filter((item) =>
     product.occupancyOptions.includes(item.id),
   );
-  const availablePropertyTypes = PROPERTY_TYPE_OPTIONS.filter((item: { id: PropertyType; label: string }) =>
+  const availablePropertyTypes = PROPERTY_TYPE_OPTIONS.filter((item) =>
     allowedPropertyTypes(productId).includes(item.id),
   );
 
@@ -231,6 +236,11 @@ export default function LoanPricingForm() {
     Math.round(propertyValue * maxLtvFor('heloc', occupancy) - currentBalance),
   );
 
+  // Estimated Taxes & Homeowners Insurance (standard nationwide benchmarks)
+  const estimatedTaxMonthly = Math.round((derivedValue * 0.0115) / 12);
+  const estimatedInsMonthly = Math.round((derivedValue * 0.0038) / 12);
+  const totalWithPiti = quote ? Math.round(quote.totalMonthly + estimatedTaxMonthly + estimatedInsMonthly) : 0;
+
   const selectProduct = (id: LoanProductId) => {
     const next = LOAN_PRODUCTS.find((item) => item.id === id);
     if (!next) return;
@@ -264,12 +274,12 @@ export default function LoanPricingForm() {
     const body = [
       `Product: ${quote.productName} (${quote.boardName})`,
       `Rate: ${formatRate(quote.interestRate)}  APR: ${formatRate(quote.apr)}`,
-      `Estimated monthly: $${formatUsd(quote.totalMonthly)} (${quote.paymentNote})`,
+      `Estimated Monthly P&I: $${formatUsd(quote.totalMonthly)} (${quote.paymentNote})`,
       quote.monthlySavings ? `Estimated Monthly Savings: $${formatUsd(quote.monthlySavings)}/mo` : '',
       quote.netCashOut ? `Net Cash Out: $${formatUsd(quote.netCashOut)}` : '',
       quote.blendedRate ? `Blended Effective Rate: ${formatRate(quote.blendedRate)}` : '',
       `Property: ${propertyAddress || 'Not provided'}`,
-      `Property Type: ${PROPERTY_TYPE_OPTIONS.find((t: { id: PropertyType; label: string }) => t.id === propertyType)?.label}`,
+      `Property Type: ${PROPERTY_TYPE_OPTIONS.find((t) => t.id === propertyType)?.label}`,
       `Occupancy: ${OCCUPANCY_OPTIONS.find((item) => item.id === occupancy)?.label}`,
       `Credit score: ${creditScore}`,
       `Lock period: ${lockDays} days`,
@@ -287,259 +297,250 @@ export default function LoanPricingForm() {
 
   return (
     <section className="pricing-engine" aria-label="Mortgage pricing engine">
-      <div>
+      <div className="pricing-engine__form-side">
+        {/* Top Header Pill & Goal Switcher */}
         <div className="ppe-badge-row">
           <span className="ppe-pill">Optimal Blue &amp; Morty PPE</span>
-          <span className="ppe-pill-sub">100% Anonymous · No SSN or Credit Pull</span>
+          <span className="ppe-pill-sub">100% Anonymous · No Personal Info or Credit Pull</span>
         </div>
 
-        <h2 className="scenario-title">Your scenario</h2>
-        <p className="scenario-lede">
-          Adjust the loan parameters and your quote updates instantly.
-        </p>
-
-        {/* Loan Product Groups */}
-        <p className="field-label">Loan product</p>
-        <div className="product-groups">
-          {LOAN_PRODUCT_GROUPS.map((group) => (
-            <div key={group.id} className="product-group">
-              <p className="product-group__label">{group.label}</p>
-              <div className="product-grid">
-                {group.productIds.map((id) => {
-                  const item = LOAN_PRODUCTS.find((p) => p.id === id);
-                  if (!item) return null;
-                  return (
-                    <button
-                      key={item.id}
-                      type="button"
-                      className={`choice-btn${productId === item.id ? ' is-active' : ''}`}
-                      aria-pressed={productId === item.id}
-                      onClick={() => selectProduct(item.id)}
-                    >
-                      {item.label}
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
-          ))}
+        <div className="scenario-header">
+          <h2 className="scenario-title">Your scenario</h2>
+          <p className="scenario-lede">
+            Select your loan path and adjust key parameters for instant real-time pricing.
+          </p>
         </div>
 
-        {/* Scenario description & requirements banner */}
-        <div className="ppe-info-box">
-          <div className="ppe-info-box__head">
-            <span className="ppe-info-box__badge">{requiredInfo.badge}</span>
+        {/* Step 1: Loan Program Selector */}
+        <div className="pricer-step-section">
+          <div className="pricer-step-title">
+            <span className="pricer-step-number">1</span>
+            <span>Select Loan Program</span>
           </div>
-          <p className="ppe-info-box__desc">{requiredInfo.description}</p>
-        </div>
 
-        {/* PURCHASE SPECIFIC FIELDS */}
-        {isPurchase && (
-          <div className="scenario-section">
-            <div className="field-grid">
-              <MoneyField
-                label="Purchase price"
-                value={purchasePrice}
-                onChange={(value) => {
-                  setPurchasePrice(value);
-                  if (downPayment > value) setDownPayment(value);
-                }}
-              />
-              <div>
-                <MoneyField
-                  label="Down payment"
-                  value={downPayment}
-                  onChange={setDownPayment}
-                />
-                <div className="quick-pill-row">
-                  {productId === 'fha' ? (
-                    <>
+          <div className="product-groups">
+            {LOAN_PRODUCT_GROUPS.map((group) => (
+              <div key={group.id} className="product-group">
+                <p className="product-group__label">{group.label}</p>
+                <div className="product-grid">
+                  {group.productIds.map((id) => {
+                    const item = LOAN_PRODUCTS.find((p) => p.id === id);
+                    if (!item) return null;
+                    const isActive = productId === item.id;
+                    return (
                       <button
+                        key={item.id}
                         type="button"
-                        className="quick-pill"
-                        onClick={() => applyDownPaymentPercent(0.035)}
+                        className={`choice-btn${isActive ? ' is-active' : ''}`}
+                        aria-pressed={isActive}
+                        onClick={() => selectProduct(item.id)}
                       >
-                        3.5% (Min)
+                        <span className="choice-btn__title">{item.label}</span>
+                        {item.id === 'conventional' && <span className="choice-btn__badge">Most Popular</span>}
+                        {item.id === 'fha' && <span className="choice-btn__badge">3.5% Down</span>}
+                        {item.id === 'rate_term' && <span className="choice-btn__badge">Lower Payment</span>}
+                        {item.id === 'cash_out' && <span className="choice-btn__badge">Get Cash</span>}
+                        {item.id === 'heloc' && <span className="choice-btn__badge">Keep 1st Rate</span>}
                       </button>
-                      <button
-                        type="button"
-                        className="quick-pill"
-                        onClick={() => applyDownPaymentPercent(0.05)}
-                      >
-                        5%
-                      </button>
-                      <button
-                        type="button"
-                        className="quick-pill"
-                        onClick={() => applyDownPaymentPercent(0.1)}
-                      >
-                        10%
-                      </button>
-                      <button
-                        type="button"
-                        className="quick-pill"
-                        onClick={() => applyDownPaymentPercent(0.2)}
-                      >
-                        20%
-                      </button>
-                    </>
-                  ) : (
-                    <>
-                      <button
-                        type="button"
-                        className="quick-pill"
-                        onClick={() => applyDownPaymentPercent(0.03)}
-                      >
-                        3%
-                      </button>
-                      <button
-                        type="button"
-                        className="quick-pill"
-                        onClick={() => applyDownPaymentPercent(0.05)}
-                      >
-                        5%
-                      </button>
-                      <button
-                        type="button"
-                        className="quick-pill"
-                        onClick={() => applyDownPaymentPercent(0.1)}
-                      >
-                        10%
-                      </button>
-                      <button
-                        type="button"
-                        className="quick-pill"
-                        onClick={() => applyDownPaymentPercent(0.2)}
-                      >
-                        20% (No PMI)
-                      </button>
-                    </>
-                  )}
+                    );
+                  })}
                 </div>
               </div>
-            </div>
-            <p className="computed-line">
-              Base loan ${formatUsd(derivedLoan)} · {Math.round(derivedLtv * 100)}% LTV
-              {productId === 'fha' ? ` · Min FHA down $${formatUsd(minFhaDown)}` : ''}
-              {derivedLtv > 0.8 && productId === 'conventional' ? ' · PMI applies (>80% LTV)' : ''}
-            </p>
-
-            <div className="scenario-toggles">
-              {productId === 'conventional' && (
-                <>
-                  <label className="checkbox-label">
-                    <input
-                      type="checkbox"
-                      checked={firstTimeHomebuyer}
-                      onChange={(e) => setFirstTimeHomebuyer(e.target.checked)}
-                    />
-                    <span>First-time homebuyer (allows 3% down conforming)</span>
-                  </label>
-                  <label className="checkbox-label">
-                    <input
-                      type="checkbox"
-                      checked={waiveEscrow}
-                      onChange={(e) => setWaiveEscrow(e.target.checked)}
-                    />
-                    <span>Waive escrow impounds (pay property taxes &amp; insurance directly)</span>
-                  </label>
-                </>
-              )}
-              {productId === 'fha' && (
-                <label className="checkbox-label">
-                  <input
-                    type="checkbox"
-                    checked={financeUpfrontMip}
-                    onChange={(e) => setFinanceUpfrontMip(e.target.checked)}
-                  />
-                  <span>Finance 1.75% Upfront MIP into total loan amount (Standard)</span>
-                </label>
-              )}
-            </div>
+            ))}
           </div>
-        )}
 
-        {/* RATE & TERM REFINANCE FIELDS */}
-        {productId === 'rate_term' && (
-          <div className="scenario-section">
-            <div className="field-grid">
-              <MoneyField
-                label="Estimated property value"
-                value={propertyValue}
-                onChange={setPropertyValue}
-              />
-              <MoneyField
-                label="Current 1st mortgage balance (Payoff)"
-                value={currentBalance}
-                onChange={setCurrentBalance}
-              />
+          {/* Program requirements banner */}
+          <div className="ppe-info-box">
+            <div className="ppe-info-box__head">
+              <span className="ppe-info-box__badge">{requiredInfo.badge}</span>
             </div>
-
-            <div className="field-grid" style={{ marginTop: '0.85rem' }}>
-              <PercentField
-                label="Current interest rate (to calculate savings)"
-                value={currentRate}
-                onChange={setCurrentRate}
-              />
-              <label>
-                <span className="field-label">2nd mortgage / Subordinate lien</span>
-                <select
-                  className="select-input"
-                  value={subordinateFinancing}
-                  onChange={(e) =>
-                    setSubordinateFinancing(e.target.value as SubordinateFinancing)
-                  }
-                >
-                  {SUBORDINATE_FINANCING_OPTIONS.map((opt: { id: SubordinateFinancing; label: string }) => (
-                    <option key={opt.id} value={opt.id}>
-                      {opt.label}
-                    </option>
-                  ))}
-                </select>
-              </label>
-            </div>
-
-            <p className="computed-line">
-              New loan ${formatUsd(derivedLoan)} · {Math.round(derivedLtv * 100)}% LTV
-              {currentRate > 0 && quote?.monthlySavings ? ` · Current rate ${currentRate}%` : ''}
-            </p>
+            <p className="ppe-info-box__desc">{requiredInfo.description}</p>
           </div>
-        )}
+        </div>
 
-        {/* CASH-OUT REFINANCE FIELDS */}
-        {productId === 'cash_out' && (
-          <div className="scenario-section">
-            <div className="field-grid">
-              <MoneyField
-                label="Estimated property value"
-                value={propertyValue}
-                onChange={setPropertyValue}
-              />
-              <MoneyField
-                label="Current mortgage payoff balance"
-                value={currentBalance}
-                onChange={setCurrentBalance}
-              />
-            </div>
+        {/* Step 2: Loan Scenario Specific Fields */}
+        <div className="pricer-step-section">
+          <div className="pricer-step-title">
+            <span className="pricer-step-number">2</span>
+            <span>
+              {isPurchase ? 'Purchase & Down Payment' : isRefi ? 'Refinance & Property Balances' : 'HELOC Equity Details'}
+            </span>
+          </div>
 
-            <div className="extra-box">
-              <p className="extra-box__title">Cash-out request &amp; purpose</p>
+          {/* PURCHASE SPECIFIC FIELDS */}
+          {isPurchase && (
+            <div className="scenario-section">
               <div className="field-grid">
                 <MoneyField
-                  label="Cash amount needed in pocket"
-                  value={cashOutAmount}
-                  onChange={setCashOutAmount}
+                  label="Purchase price"
+                  value={purchasePrice}
+                  onChange={(value) => {
+                    setPurchasePrice(value);
+                    if (downPayment > value) setDownPayment(value);
+                  }}
                 />
-                <label>
-                  <span className="field-label">Primary cash-out purpose</span>
+                <div>
+                  <MoneyField
+                    label="Down payment"
+                    value={downPayment}
+                    onChange={setDownPayment}
+                  />
+                  <div className="quick-pill-row">
+                    {productId === 'fha' ? (
+                      <>
+                        <button
+                          type="button"
+                          className="quick-pill"
+                          onClick={() => applyDownPaymentPercent(0.035)}
+                        >
+                          3.5% (Min)
+                        </button>
+                        <button
+                          type="button"
+                          className="quick-pill"
+                          onClick={() => applyDownPaymentPercent(0.05)}
+                        >
+                          5%
+                        </button>
+                        <button
+                          type="button"
+                          className="quick-pill"
+                          onClick={() => applyDownPaymentPercent(0.1)}
+                        >
+                          10%
+                        </button>
+                        <button
+                          type="button"
+                          className="quick-pill"
+                          onClick={() => applyDownPaymentPercent(0.2)}
+                        >
+                          20%
+                        </button>
+                      </>
+                    ) : (
+                      <>
+                        <button
+                          type="button"
+                          className="quick-pill"
+                          onClick={() => applyDownPaymentPercent(0.03)}
+                        >
+                          3%
+                        </button>
+                        <button
+                          type="button"
+                          className="quick-pill"
+                          onClick={() => applyDownPaymentPercent(0.05)}
+                        >
+                          5%
+                        </button>
+                        <button
+                          type="button"
+                          className="quick-pill"
+                          onClick={() => applyDownPaymentPercent(0.1)}
+                        >
+                          10%
+                        </button>
+                        <button
+                          type="button"
+                          className="quick-pill"
+                          onClick={() => applyDownPaymentPercent(0.2)}
+                        >
+                          20% (No PMI)
+                        </button>
+                      </>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              {/* Visual LTV Health Gauge */}
+              <div className="ltv-gauge-card">
+                <div className="ltv-gauge-card__head">
+                  <span className="ltv-gauge-card__loan">Base Loan: <strong>${formatUsd(derivedLoan)}</strong></span>
+                  <span className={`ltv-gauge-card__tag ${derivedLtv <= 0.8 ? 'is-green' : derivedLtv <= 0.9 ? 'is-amber' : 'is-blue'}`}>
+                    {Math.round(derivedLtv * 100)}% LTV {derivedLtv <= 0.8 ? '· No PMI' : derivedLtv <= 0.9 ? '· Low Down' : '· FHA 96.5%'}
+                  </span>
+                </div>
+                <div className="ltv-bar-track">
+                  <div
+                    className={`ltv-bar-fill ${derivedLtv <= 0.8 ? 'is-green' : derivedLtv <= 0.9 ? 'is-amber' : 'is-blue'}`}
+                    style={{ width: `${Math.min(100, Math.round(derivedLtv * 100))}%` }}
+                  />
+                </div>
+                <div className="ltv-bar-labels">
+                  <span>0% (Full Cash)</span>
+                  <span className="ltv-bar-marker">80% (PMI Threshold)</span>
+                  <span>100%</span>
+                </div>
+              </div>
+
+              <div className="scenario-toggles">
+                {productId === 'conventional' && (
+                  <>
+                    <label className="checkbox-label">
+                      <input
+                        type="checkbox"
+                        checked={firstTimeHomebuyer}
+                        onChange={(e) => setFirstTimeHomebuyer(e.target.checked)}
+                      />
+                      <span>First-time homebuyer (qualifies for 3% down conforming program)</span>
+                    </label>
+                    <label className="checkbox-label">
+                      <input
+                        type="checkbox"
+                        checked={waiveEscrow}
+                        onChange={(e) => setWaiveEscrow(e.target.checked)}
+                      />
+                      <span>Waive escrow impounds (pay property taxes &amp; insurance directly)</span>
+                    </label>
+                  </>
+                )}
+                {productId === 'fha' && (
+                  <label className="checkbox-label">
+                    <input
+                      type="checkbox"
+                      checked={financeUpfrontMip}
+                      onChange={(e) => setFinanceUpfrontMip(e.target.checked)}
+                    />
+                    <span>Finance 1.75% Upfront MIP into total loan amount (Standard)</span>
+                  </label>
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* RATE & TERM REFINANCE FIELDS */}
+          {productId === 'rate_term' && (
+            <div className="scenario-section">
+              <div className="field-grid">
+                <MoneyField
+                  label="Estimated property value"
+                  value={propertyValue}
+                  onChange={setPropertyValue}
+                />
+                <MoneyField
+                  label="Current 1st mortgage balance (Payoff)"
+                  value={currentBalance}
+                  onChange={setCurrentBalance}
+                />
+              </div>
+
+              <div className="field-grid" style={{ marginTop: '0.85rem' }}>
+                <PercentField
+                  label="Current interest rate (to compute monthly savings)"
+                  value={currentRate}
+                  onChange={setCurrentRate}
+                />
+                <label className="field-block">
+                  <span className="field-label">2nd mortgage / Subordinate lien</span>
                   <select
                     className="select-input"
-                    value={cashOutPurpose}
+                    value={subordinateFinancing}
                     onChange={(e) =>
-                      setCashOutPurpose(e.target.value as CashOutPurpose)
+                      setSubordinateFinancing(e.target.value as SubordinateFinancing)
                     }
                   >
-                    {CASH_OUT_PURPOSE_OPTIONS.map((opt: { id: CashOutPurpose; label: string }) => (
+                    {SUBORDINATE_FINANCING_OPTIONS.map((opt) => (
                       <option key={opt.id} value={opt.id}>
                         {opt.label}
                       </option>
@@ -548,180 +549,241 @@ export default function LoanPricingForm() {
                 </label>
               </div>
 
-              <p className="computed-line" style={{ marginTop: '0.65rem' }}>
-                New total loan ${formatUsd(derivedLoan)} · {Math.round(derivedLtv * 100)}% LTV
-                (Max 80% LTV: ${formatUsd(maxCashOutCap)}) · Max cash available: ${formatUsd(maxAvailableCashOut)}
+              <p className="computed-line">
+                New loan ${formatUsd(derivedLoan)} · {Math.round(derivedLtv * 100)}% LTV
+                {currentRate > 0 && quote?.monthlySavings ? ` · Current rate: ${currentRate}%` : ''}
               </p>
             </div>
-          </div>
-        )}
+          )}
 
-        {/* HELOC FIELDS */}
-        {isHeloc && (
-          <div className="scenario-section">
-            <div className="field-grid">
-              <MoneyField
-                label="Estimated property value"
-                value={propertyValue}
-                onChange={setPropertyValue}
-              />
-              <MoneyField
-                label="Current 1st mortgage balance (kept in place)"
-                value={currentBalance}
-                onChange={setCurrentBalance}
-              />
-            </div>
-
-            <div className="extra-box">
-              <p className="extra-box__title">HELOC credit line &amp; initial draw</p>
+          {/* CASH-OUT REFINANCE FIELDS */}
+          {productId === 'cash_out' && (
+            <div className="scenario-section">
               <div className="field-grid">
                 <MoneyField
-                  label="Requested HELOC credit line"
-                  value={helocLine}
-                  onChange={(value) => {
-                    setHelocLine(value);
-                    if (helocDraw > value) setHelocDraw(value);
-                  }}
+                  label="Estimated property value"
+                  value={propertyValue}
+                  onChange={setPropertyValue}
                 />
                 <MoneyField
-                  label="Amount to draw immediately at closing"
-                  value={helocDraw}
-                  onChange={setHelocDraw}
+                  label="Current mortgage payoff balance"
+                  value={currentBalance}
+                  onChange={setCurrentBalance}
                 />
               </div>
 
-              <div style={{ marginTop: '0.85rem' }}>
-                <PercentField
-                  label="Existing 1st mortgage rate (for blended rate comparison)"
-                  value={firstLienRate}
-                  onChange={setFirstLienRate}
+              <div className="extra-box">
+                <p className="extra-box__title">Cash-out request &amp; purpose</p>
+                <div className="field-grid">
+                  <MoneyField
+                    label="Cash amount needed in pocket"
+                    value={cashOutAmount}
+                    onChange={setCashOutAmount}
+                  />
+                  <label className="field-block">
+                    <span className="field-label">Primary cash-out purpose</span>
+                    <select
+                      className="select-input"
+                      value={cashOutPurpose}
+                      onChange={(e) =>
+                        setCashOutPurpose(e.target.value as CashOutPurpose)
+                      }
+                    >
+                      {CASH_OUT_PURPOSE_OPTIONS.map((opt) => (
+                        <option key={opt.id} value={opt.id}>
+                          {opt.label}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                </div>
+
+                <p className="computed-line" style={{ marginTop: '0.65rem' }}>
+                  New total loan ${formatUsd(derivedLoan)} · {Math.round(derivedLtv * 100)}% LTV
+                  (Max 80% LTV: ${formatUsd(maxCashOutCap)}) · Max cash available: ${formatUsd(maxAvailableCashOut)}
+                </p>
+              </div>
+            </div>
+          )}
+
+          {/* HELOC FIELDS */}
+          {isHeloc && (
+            <div className="scenario-section">
+              <div className="field-grid">
+                <MoneyField
+                  label="Estimated property value"
+                  value={propertyValue}
+                  onChange={setPropertyValue}
+                />
+                <MoneyField
+                  label="Current 1st mortgage balance (kept in place)"
+                  value={currentBalance}
+                  onChange={setCurrentBalance}
                 />
               </div>
 
-              <p className="computed-line" style={{ marginTop: '0.65rem' }}>
-                Combined LTV {Math.round(derivedCltv * 100)}% (Max 90% CLTV) · Max line available ${formatUsd(maxHelocLine)}
-              </p>
+              <div className="extra-box">
+                <p className="extra-box__title">HELOC credit line &amp; initial draw</p>
+                <div className="field-grid">
+                  <MoneyField
+                    label="Requested HELOC credit line"
+                    value={helocLine}
+                    onChange={(value) => {
+                      setHelocLine(value);
+                      if (helocDraw > value) setHelocDraw(value);
+                    }}
+                  />
+                  <MoneyField
+                    label="Amount to draw immediately at closing"
+                    value={helocDraw}
+                    onChange={setHelocDraw}
+                  />
+                </div>
+
+                <div style={{ marginTop: '0.85rem' }}>
+                  <PercentField
+                    label="Existing 1st mortgage rate (for blended rate comparison)"
+                    value={firstLienRate}
+                    onChange={setFirstLienRate}
+                  />
+                </div>
+
+                <p className="computed-line" style={{ marginTop: '0.65rem' }}>
+                  Combined LTV {Math.round(derivedCltv * 100)}% (Max 90% CLTV) · Max line available ${formatUsd(maxHelocLine)}
+                </p>
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* Step 3: Credit, Lock, Occupancy & Location */}
+        <div className="pricer-step-section">
+          <div className="pricer-step-title">
+            <span className="pricer-step-number">3</span>
+            <span>Credit Tier, Lock &amp; Location</span>
+          </div>
+
+          {/* Credit score slider with quick preset buttons */}
+          <div className="stack-field">
+            <div className="credit-head">
+              <span className="field-label" style={{ marginBottom: 0 }}>
+                Credit Score (FICO Tier): <strong>{creditScore}</strong>
+              </span>
+              <span className="credit-score-badge">
+                {creditScore >= 760 ? '★ Prime Tier (Best Rates)' : creditScore >= 720 ? '✓ Preferred Tier' : creditScore >= 680 ? 'Good Credit' : 'Standard'}
+              </span>
+            </div>
+            <input
+              className="credit-slider"
+              type="range"
+              min={580}
+              max={820}
+              step={5}
+              value={creditScore}
+              onChange={(event) => setCreditScore(Number(event.target.value))}
+              aria-label="Credit score"
+            />
+            <div className="credit-presets-row">
+              <button type="button" className={`credit-preset-btn ${creditScore === 680 ? 'is-active' : ''}`} onClick={() => setCreditScore(680)}>680 Good</button>
+              <button type="button" className={`credit-preset-btn ${creditScore === 720 ? 'is-active' : ''}`} onClick={() => setCreditScore(720)}>720 Great</button>
+              <button type="button" className={`credit-preset-btn ${creditScore === 740 ? 'is-active' : ''}`} onClick={() => setCreditScore(740)}>740 Preferred</button>
+              <button type="button" className={`credit-preset-btn ${creditScore === 780 ? 'is-active' : ''}`} onClick={() => setCreditScore(780)}>780+ Top Tier</button>
             </div>
           </div>
-        )}
 
-        {/* PROPERTY TYPE & LOCK PERIOD */}
-        <div className="field-grid stack-field">
-          <label>
-            <span className="field-label">Property type</span>
-            <select
-              className="select-input"
-              value={propertyType}
-              onChange={(e) => setPropertyType(e.target.value as PropertyType)}
-            >
-              {availablePropertyTypes.map((opt: { id: PropertyType; label: string }) => (
-                <option key={opt.id} value={opt.id}>
-                  {opt.label}
-                </option>
-              ))}
-            </select>
-          </label>
-
-          <label>
-            <span className="field-label">Lock period</span>
-            <select
-              className="select-input"
-              value={lockDays}
-              onChange={(e) => setLockDays(Number(e.target.value) as LockDays)}
-            >
-              {LOCK_DAY_OPTIONS.map((opt: { value: LockDays; label: string }) => (
-                <option key={opt.value} value={opt.value}>
-                  {opt.label}
-                </option>
-              ))}
-            </select>
-          </label>
-        </div>
-
-        {/* CREDIT SCORE SLIDER */}
-        <div className="stack-field">
-          <div className="credit-head">
-            <span className="field-label" style={{ marginBottom: 0 }}>
-              Credit score (FICO): {creditScore}
-            </span>
-          </div>
-          <input
-            className="credit-slider"
-            type="range"
-            min={580}
-            max={820}
-            step={5}
-            value={creditScore}
-            onChange={(event) => setCreditScore(Number(event.target.value))}
-            aria-label="Credit score"
-          />
-          <div className="credit-range">
-            <span>580</span>
-            <span>680</span>
-            <span>740</span>
-            <span>820</span>
-          </div>
-        </div>
-
-        {/* TERM SELECTOR */}
-        {product.termOptions.length > 0 && !isHeloc && (
-          <div className="stack-field">
-            <label>
-              <span className="field-label">Loan term</span>
+          {/* Property Type & Lock Period */}
+          <div className="field-grid stack-field">
+            <label className="field-block">
+              <span className="field-label">Property type</span>
               <select
                 className="select-input"
-                value={termMonths}
-                onChange={(event) => setTermMonths(Number(event.target.value))}
+                value={propertyType}
+                onChange={(e) => setPropertyType(e.target.value as PropertyType)}
               >
-                {product.termOptions.map((option) => (
-                  <option key={option.value} value={option.value}>
-                    {option.label}
+                {availablePropertyTypes.map((opt) => (
+                  <option key={opt.id} value={opt.id}>
+                    {opt.label}
+                  </option>
+                ))}
+              </select>
+            </label>
+
+            <label className="field-block">
+              <span className="field-label">Lock period</span>
+              <select
+                className="select-input"
+                value={lockDays}
+                onChange={(e) => setLockDays(Number(e.target.value) as LockDays)}
+              >
+                {LOCK_DAY_OPTIONS.map((opt) => (
+                  <option key={opt.value} value={opt.value}>
+                    {opt.label}
                   </option>
                 ))}
               </select>
             </label>
           </div>
-        )}
 
-        {/* OCCUPANCY */}
-        <div className="stack-field">
-          <p className="field-label">Property occupancy</p>
-          <div
-            className="occupancy-grid"
-            style={{
-              gridTemplateColumns: `repeat(${occupancyChoices.length}, minmax(0, 1fr))`,
-            }}
-          >
-            {occupancyChoices.map((item) => (
-              <button
-                key={item.id}
-                type="button"
-                className={`choice-btn${occupancy === item.id ? ' is-active' : ''}`}
-                onClick={() => setOccupancy(item.id)}
-              >
-                {item.label}
-              </button>
-            ))}
-          </div>
-          {productId === 'fha' && (
-            <p className="computed-line">FHA government financing strictly requires owner-occupied primary residence.</p>
+          {/* Term Selector */}
+          {product.termOptions.length > 0 && !isHeloc && (
+            <div className="stack-field">
+              <label className="field-block">
+                <span className="field-label">Loan term</span>
+                <select
+                  className="select-input"
+                  value={termMonths}
+                  onChange={(event) => setTermMonths(Number(event.target.value))}
+                >
+                  {product.termOptions.map((option) => (
+                    <option key={option.value} value={option.value}>
+                      {option.label}
+                    </option>
+                  ))}
+                </select>
+              </label>
+            </div>
           )}
-        </div>
 
-        {/* PROPERTY LOCATION (ADDRESS) */}
-        <div className="stack-field">
-          <label>
-            <span className="field-label">Property location (Service area: NY, NJ, PA, CT, FL)</span>
-            <UsAddressInput
-              value={propertyAddress}
-              onChange={setPropertyAddress}
-              className={ADDRESS_CLASS}
-            />
-          </label>
+          {/* Occupancy */}
+          <div className="stack-field">
+            <p className="field-label">Property occupancy</p>
+            <div
+              className="occupancy-grid"
+              style={{
+                gridTemplateColumns: `repeat(${occupancyChoices.length}, minmax(0, 1fr))`,
+              }}
+            >
+              {occupancyChoices.map((item) => (
+                <button
+                  key={item.id}
+                  type="button"
+                  className={`choice-btn${occupancy === item.id ? ' is-active' : ''}`}
+                  onClick={() => setOccupancy(item.id)}
+                >
+                  {item.label}
+                </button>
+              ))}
+            </div>
+            {productId === 'fha' && (
+              <p className="computed-line">FHA government financing strictly requires owner-occupied primary residence.</p>
+            )}
+          </div>
+
+          {/* Property location (Address) */}
+          <div className="stack-field">
+            <label className="field-block">
+              <span className="field-label">Property location (Service area: NY, NJ, PA, CT, FL)</span>
+              <UsAddressInput
+                value={propertyAddress}
+                onChange={setPropertyAddress}
+                className={ADDRESS_CLASS}
+              />
+            </label>
+          </div>
         </div>
       </div>
 
-      {/* BEST-FIT QUOTE SIDEBAR */}
+      {/* BEST-FIT QUOTE STICKY SIDEBAR */}
       <aside className="quote-card" aria-live="polite">
         {error && products.length === 0 ? (
           <div className="quote-card__empty">{error}</div>
@@ -756,6 +818,24 @@ export default function LoanPricingForm() {
             </header>
 
             <div className="quote-card__body">
+              {/* Tab Selector: Quote Summary vs Payment Breakdown */}
+              <div className="quote-tab-row">
+                <button
+                  type="button"
+                  className={`quote-tab-btn ${activeTab === 'quote' ? 'is-active' : ''}`}
+                  onClick={() => setActiveTab('quote')}
+                >
+                  Quote Summary
+                </button>
+                <button
+                  type="button"
+                  className={`quote-tab-btn ${activeTab === 'breakdown' ? 'is-active' : ''}`}
+                  onClick={() => setActiveTab('breakdown')}
+                >
+                  Payment Breakdown (PITI)
+                </button>
+              </div>
+
               {/* Refinance savings banner */}
               {productId === 'rate_term' && quote.monthlySavings != null && quote.monthlySavings > 0 && (
                 <div className="quote-highlight-banner">
@@ -789,46 +869,77 @@ export default function LoanPricingForm() {
                 </div>
               )}
 
-              <div className="quote-card__payment">
-                <p className="quote-card__payment-label">Estimated monthly payment</p>
-                <p className="quote-card__payment-amount">
-                  ${formatUsd(Math.round(quote.totalMonthly))}
-                </p>
-                <p className="quote-card__payment-note">{quote.paymentNote}</p>
-                <svg
-                  className="quote-card__chart"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  aria-hidden="true"
-                >
-                  <path
-                    d="M3 16.5 8.2 11l3.6 3.2L21 6.5"
-                    stroke="currentColor"
-                    strokeWidth="1.8"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  />
-                  <path
-                    d="M15 6.5h6v6"
-                    stroke="currentColor"
-                    strokeWidth="1.8"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  />
-                </svg>
-              </div>
-
-              <div className="quote-card__metrics">
-                {quote.metrics.map((metric) => (
-                  <div key={metric.label} className="quote-metric">
-                    <div className="quote-metric__label">{metric.label}</div>
-                    <div className="quote-metric__value">{metric.value}</div>
-                    {metric.hint ? (
-                      <div className="quote-metric__hint">{metric.hint}</div>
-                    ) : null}
+              {activeTab === 'quote' ? (
+                <>
+                  <div className="quote-card__payment">
+                    <p className="quote-card__payment-label">Estimated monthly payment</p>
+                    <p className="quote-card__payment-amount">
+                      ${formatUsd(Math.round(quote.totalMonthly))}
+                    </p>
+                    <p className="quote-card__payment-note">{quote.paymentNote}</p>
+                    <svg
+                      className="quote-card__chart"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      aria-hidden="true"
+                    >
+                      <path
+                        d="M3 16.5 8.2 11l3.6 3.2L21 6.5"
+                        stroke="currentColor"
+                        strokeWidth="1.8"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      />
+                      <path
+                        d="M15 6.5h6v6"
+                        stroke="currentColor"
+                        strokeWidth="1.8"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      />
+                    </svg>
                   </div>
-                ))}
-              </div>
+
+                  <div className="quote-card__metrics">
+                    {quote.metrics.map((metric) => (
+                      <div key={metric.label} className="quote-metric">
+                        <div className="quote-metric__label">{metric.label}</div>
+                        <div className="quote-metric__value">{metric.value}</div>
+                        {metric.hint ? (
+                          <div className="quote-metric__hint">{metric.hint}</div>
+                        ) : null}
+                      </div>
+                    ))}
+                  </div>
+                </>
+              ) : (
+                /* Interactive Payment Breakdown Tab */
+                <div className="payment-breakdown-box">
+                  <div className="payment-breakdown-row">
+                    <span>Principal &amp; Interest</span>
+                    <strong>${formatUsd(Math.round(quote.monthlyPayment))}</strong>
+                  </div>
+                  {quote.monthlyInsurance > 0 && (
+                    <div className="payment-breakdown-row is-highlight">
+                      <span>{productId === 'fha' ? 'FHA Monthly MIP' : 'Private Mortgage Insurance (PMI)'}</span>
+                      <strong>${formatUsd(Math.round(quote.monthlyInsurance))}</strong>
+                    </div>
+                  )}
+                  <div className="payment-breakdown-row">
+                    <span>Est. Property Taxes</span>
+                    <strong>${formatUsd(estimatedTaxMonthly)}</strong>
+                  </div>
+                  <div className="payment-breakdown-row">
+                    <span>Est. Homeowners Insurance</span>
+                    <strong>${formatUsd(estimatedInsMonthly)}</strong>
+                  </div>
+                  <div className="payment-breakdown-total">
+                    <span>Total Est. Monthly (PITI)</span>
+                    <strong className="payment-breakdown-total__amount">${formatUsd(totalWithPiti)}</strong>
+                  </div>
+                  <p className="payment-breakdown-note">Taxes &amp; insurance are estimates based on standard county averages.</p>
+                </div>
+              )}
 
               <a className="quote-card__cta" href={consultationHref}>
                 Lock This Rate — Request Consultation
