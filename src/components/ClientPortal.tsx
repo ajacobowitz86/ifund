@@ -56,9 +56,15 @@ function FeatureIcon({ name }: { name: 'bolt' | 'refresh' | 'check' }) {
 }
 
 export default function ClientPortal() {
+  const handleStartApplication = () => {
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(new CustomEvent('ifund:start-application'));
+    }
+  };
+
   return (
     <div className="ifund-shell">
-      <BrandHeader />
+      <BrandHeader onStartApplication={handleStartApplication} />
       <LiveMarketBar />
 
       <main className="flex-1 pb-12">

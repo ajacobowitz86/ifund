@@ -1291,14 +1291,16 @@ body {
   justify-content: center;
   width: 100%;
   margin-top: 1rem;
+  border: 0;
   border-radius: 6px;
   background: var(--brand-gold);
   color: var(--brand-white);
-  font-size: 0.86rem;
+  font-size: 0.88rem;
   font-weight: 700;
   text-decoration: none;
   padding: 0.88rem 0.75rem;
   text-align: center;
+  cursor: pointer;
   box-shadow: 0 2px 8px rgba(197, 160, 89, 0.3);
   transition: all 0.15s ease;
 }
@@ -1308,6 +1310,669 @@ body {
   transform: translateY(-1px);
   box-shadow: 0 4px 12px rgba(197, 160, 89, 0.4);
 }
+
+/* ========================================================= */
+/* APPLICATION MODAL & STEP 2 STYLES                         */
+/* ========================================================= */
+.app-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(14, 30, 54, 0.72);
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1.25rem;
+  z-index: 100;
+  overflow-y: auto;
+  animation: app-fade-in 0.2s ease-out;
+}
+
+@keyframes app-fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.app-modal-container {
+  position: relative;
+  background: var(--brand-white);
+  width: 100%;
+  max-width: 44rem;
+  border-radius: 16px;
+  box-shadow: 0 24px 60px rgba(14, 30, 54, 0.24);
+  border: 1px solid rgba(255, 255, 255, 0.8);
+  max-height: 92vh;
+  overflow-y: auto;
+  animation: app-scale-up 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes app-scale-up {
+  from {
+    opacity: 0;
+    transform: scale(0.96) translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+.app-modal-close-btn {
+  position: absolute;
+  top: 1.25rem;
+  right: 1.25rem;
+  width: 2.25rem;
+  height: 2.25rem;
+  border-radius: 50%;
+  border: 1px solid var(--brand-border);
+  background: var(--brand-white);
+  color: var(--brand-slate);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  z-index: 10;
+}
+
+.app-modal-close-btn:hover {
+  background: #f1f5f9;
+  color: var(--brand-navy);
+}
+
+.app-modal-close-btn svg {
+  width: 1.15rem;
+  height: 1.15rem;
+}
+
+.app-modal-content {
+  padding: 2.2rem 2.2rem 2.4rem;
+}
+
+.app-modal-header {
+  margin-bottom: 1.25rem;
+}
+
+.app-modal-badge-row {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  margin-bottom: 0.5rem;
+}
+
+.app-modal-step-badge {
+  background: var(--brand-gold);
+  color: var(--brand-white);
+  font-size: 0.64rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  padding: 0.2rem 0.55rem;
+  border-radius: 4px;
+}
+
+.app-modal-badge-text {
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: var(--brand-navy);
+}
+
+.app-modal-title {
+  margin: 0;
+  font-family: var(--font-brand-serif), ui-serif, Georgia, serif;
+  font-size: 1.75rem;
+  font-weight: 700;
+  color: var(--brand-navy);
+  line-height: 1.2;
+}
+
+.app-modal-subtitle {
+  margin: 0.4rem 0 0;
+  font-size: 0.88rem;
+  line-height: 1.45;
+  color: var(--brand-slate);
+}
+
+/* Locked quote banner strip in modal */
+.app-locked-scenario-strip {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: linear-gradient(135deg, #0e1e36 0%, #172844 100%);
+  color: var(--brand-white);
+  border-radius: 10px;
+  padding: 0.85rem 1.15rem;
+  margin-bottom: 1.45rem;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 0 4px 12px rgba(14, 30, 54, 0.15);
+}
+
+.app-locked-tag {
+  font-size: 0.58rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--brand-gold);
+}
+
+.app-locked-product {
+  display: block;
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--brand-white);
+  margin: 0.1rem 0;
+}
+
+.app-locked-meta {
+  font-size: 0.68rem;
+  color: rgba(255, 255, 255, 0.7);
+}
+
+.app-locked-scenario-right {
+  text-align: right;
+}
+
+.app-locked-figures {
+  display: flex;
+  align-items: baseline;
+  justify-content: flex-end;
+  gap: 0.45rem;
+}
+
+.app-locked-rate {
+  font-size: 1.35rem;
+  font-weight: 700;
+  color: var(--brand-gold);
+  line-height: 1;
+}
+
+.app-locked-apr {
+  font-size: 0.74rem;
+  color: rgba(255, 255, 255, 0.8);
+  font-weight: 600;
+}
+
+.app-locked-payment {
+  margin-top: 0.2rem;
+  font-size: 0.74rem;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.85);
+}
+
+/* Form Fields in Modal */
+.app-modal-form {
+  display: flex;
+  flex-direction: column;
+  gap: 1.1rem;
+}
+
+.app-form-row-2 {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.95rem 1.15rem;
+}
+
+.app-form-label-block {
+  display: flex;
+  flex-direction: column;
+}
+
+.app-form-label {
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--brand-navy);
+  margin-bottom: 0.4rem;
+}
+
+.app-required {
+  color: #dc2626;
+}
+
+.app-form-input,
+.app-form-select {
+  width: 100%;
+  height: 2.75rem;
+  border: 1px solid var(--brand-border);
+  background: #f8fafc;
+  border-radius: 6px;
+  padding: 0 0.85rem;
+  font-size: 0.92rem;
+  color: var(--brand-navy);
+  outline: none;
+  transition: all 0.15s ease;
+}
+
+.app-form-input:focus,
+.app-form-select:focus {
+  border-color: var(--brand-navy);
+  background: var(--brand-white);
+  box-shadow: 0 0 0 3px rgba(26, 43, 75, 0.08);
+}
+
+.app-input-hint {
+  margin-top: 0.28rem;
+  font-size: 0.65rem;
+  color: var(--brand-muted);
+}
+
+/* Residency selector */
+.app-residency-toggle-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0.45rem;
+}
+
+.app-residency-btn {
+  border: 1px solid var(--brand-border);
+  background: #f8fafc;
+  color: var(--brand-slate);
+  border-radius: 6px;
+  padding: 0.6rem 0.35rem;
+  font-size: 0.74rem;
+  font-weight: 600;
+  cursor: pointer;
+  text-align: center;
+  transition: all 0.15s ease;
+  white-space: nowrap;
+}
+
+.app-residency-btn:hover {
+  border-color: #cbd5e1;
+  background: #f1f5f9;
+}
+
+.app-residency-btn.is-active {
+  background: var(--brand-navy);
+  border-color: var(--brand-navy);
+  color: var(--brand-white);
+  box-shadow: 0 2px 6px rgba(26, 43, 75, 0.15);
+}
+
+/* Security strip */
+.app-security-strip {
+  display: flex;
+  align-items: center;
+  justify-content: space-around;
+  background: #f8fafc;
+  border: 1px solid var(--brand-border);
+  border-radius: 8px;
+  padding: 0.75rem 0.85rem;
+  margin-top: 0.25rem;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.app-security-item {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: var(--brand-slate);
+}
+
+.app-security-item svg {
+  width: 0.95rem;
+  height: 0.95rem;
+  color: var(--brand-gold);
+  flex-shrink: 0;
+}
+
+.app-form-error-banner {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  color: #991b1b;
+  padding: 0.75rem 0.95rem;
+  border-radius: 6px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  margin-bottom: 0.85rem;
+}
+
+.app-form-error-banner svg {
+  width: 1.15rem;
+  height: 1.15rem;
+  flex-shrink: 0;
+}
+
+.app-modal-actions {
+  margin-top: 0.5rem;
+}
+
+.app-modal-submit-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  border: 0;
+  border-radius: 8px;
+  background: var(--brand-gold);
+  color: var(--brand-white);
+  font-size: 0.95rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  padding: 0.95rem 1.25rem;
+  cursor: pointer;
+  box-shadow: 0 4px 14px rgba(197, 160, 89, 0.38);
+  transition: all 0.15s ease;
+}
+
+.app-modal-submit-btn:hover {
+  background: var(--brand-gold-hover);
+  transform: translateY(-1px);
+  box-shadow: 0 6px 18px rgba(197, 160, 89, 0.45);
+}
+
+.app-modal-submit-btn:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.app-btn-loading {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.55rem;
+}
+
+.app-spinner {
+  width: 1.05rem;
+  height: 1.05rem;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  border-top-color: #ffffff;
+  border-radius: 50%;
+  animation: app-spin 0.6s linear infinite;
+}
+
+@keyframes app-spin {
+  to { transform: rotate(360deg); }
+}
+
+.app-modal-terms {
+  margin: 0.4rem 0 0;
+  font-size: 0.65rem;
+  line-height: 1.4;
+  color: var(--brand-muted);
+  text-align: center;
+}
+
+/* ========================================================= */
+/* STEP 2 SUCCESS CONFIRMATION SCREEN                        */
+/* ========================================================= */
+.app-success-content {
+  padding: 2.6rem 2.2rem 2.6rem;
+  animation: app-fade-in 0.3s ease-out;
+}
+
+.app-success-header {
+  text-align: center;
+  margin-bottom: 1.6rem;
+}
+
+.app-success-icon-wrap {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 4.25rem;
+  height: 4.25rem;
+  border-radius: 50%;
+  background: #ecfdf5;
+  border: 2px solid #a7f3d0;
+  color: #059669;
+  margin-bottom: 0.85rem;
+}
+
+.app-success-icon-wrap svg {
+  width: 2.25rem;
+  height: 2.25rem;
+}
+
+.app-success-badge {
+  display: inline-block;
+  background: #059669;
+  color: #ffffff;
+  font-size: 0.66rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  padding: 0.25rem 0.65rem;
+  border-radius: 4px;
+  margin-bottom: 0.65rem;
+}
+
+.app-success-title {
+  margin: 0;
+  font-family: var(--font-brand-serif), ui-serif, Georgia, serif;
+  font-size: 1.85rem;
+  font-weight: 700;
+  color: var(--brand-navy);
+  line-height: 1.25;
+}
+
+.app-success-desc {
+  margin: 0.65rem auto 0;
+  max-width: 32rem;
+  font-size: 0.95rem;
+  line-height: 1.5;
+  color: var(--brand-slate);
+}
+
+.app-success-ref-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: #f8fafc;
+  border: 2px dashed #cbd5e1;
+  border-radius: 10px;
+  padding: 1rem 1.35rem;
+  margin-bottom: 1.5rem;
+}
+
+.app-success-ref-left {
+  display: flex;
+  flex-direction: column;
+}
+
+.app-success-ref-label {
+  font-size: 0.65rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--brand-slate);
+}
+
+.app-success-ref-number {
+  font-size: 1.35rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  color: var(--brand-navy);
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  margin-top: 0.15rem;
+}
+
+.app-success-copy-btn {
+  border: 1px solid var(--brand-border);
+  background: var(--brand-white);
+  color: var(--brand-navy);
+  font-size: 0.74rem;
+  font-weight: 700;
+  padding: 0.45rem 0.85rem;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.app-success-copy-btn:hover {
+  background: var(--brand-navy);
+  color: var(--brand-white);
+  border-color: var(--brand-navy);
+}
+
+.app-success-summary-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.app-success-summary-box {
+  background: #f8fafc;
+  border: 1px solid var(--brand-border);
+  border-radius: 8px;
+  padding: 1rem 1.15rem;
+}
+
+.app-summary-box-title {
+  margin: 0 0 0.75rem;
+  font-size: 0.74rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--brand-navy);
+  border-bottom: 1px solid var(--brand-border);
+  padding-bottom: 0.45rem;
+}
+
+.app-summary-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.app-summary-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  font-size: 0.8rem;
+  color: var(--brand-slate);
+  gap: 0.5rem;
+}
+
+.app-summary-item strong {
+  color: var(--brand-navy);
+  text-align: right;
+}
+
+.app-highlight-green {
+  color: #059669 !important;
+}
+
+/* What Happens Next 3-Step Flow */
+.app-next-steps-section {
+  background: #f1f5f9;
+  border-radius: 10px;
+  padding: 1.15rem 1.25rem;
+  margin-bottom: 1.6rem;
+}
+
+.app-next-steps-title {
+  margin: 0 0 0.85rem;
+  font-size: 0.74rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--brand-navy);
+}
+
+.app-next-steps-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0.85rem;
+}
+
+.app-next-step-card {
+  display: flex;
+  gap: 0.65rem;
+  background: var(--brand-white);
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  padding: 0.75rem 0.85rem;
+}
+
+.app-step-num {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.35rem;
+  height: 1.35rem;
+  border-radius: 50%;
+  background: var(--brand-navy);
+  color: var(--brand-white);
+  font-size: 0.7rem;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
+.app-step-body strong {
+  display: block;
+  font-size: 0.76rem;
+  color: var(--brand-navy);
+  line-height: 1.2;
+}
+
+.app-step-body p {
+  margin: 0.25rem 0 0;
+  font-size: 0.68rem;
+  line-height: 1.35;
+  color: var(--brand-slate);
+}
+
+.app-success-actions {
+  display: flex;
+  gap: 0.85rem;
+}
+
+.app-btn-secondary {
+  flex: 1;
+  border: 1px solid var(--brand-border);
+  background: #f8fafc;
+  color: var(--brand-navy);
+  font-size: 0.88rem;
+  font-weight: 700;
+  padding: 0.88rem 1rem;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.app-btn-secondary:hover {
+  background: #e2e8f0;
+}
+
+@media (max-width: 640px) {
+  .app-modal-content,
+  .app-success-content {
+    padding: 1.6rem 1.2rem;
+  }
+  .app-form-row-2,
+  .app-success-summary-grid,
+  .app-next-steps-grid {
+    grid-template-columns: 1fr;
+  }
+  .app-residency-toggle-grid {
+    grid-template-columns: 1fr;
+  }
+  .app-locked-scenario-strip {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.65rem;
+  }
+  .app-locked-scenario-right {
+    text-align: left;
+  }
+  .app-locked-figures {
+    justify-content: flex-start;
+  }
+  .app-success-actions {
+    flex-direction: column;
+  }
+}
+
 
 .quote-card__disclaimer {
   margin: 0.75rem 0 0;
