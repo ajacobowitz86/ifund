@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
+import ApplicationModal from '@/components/ApplicationModal';
 import UsAddressInput from '@/components/UsAddressInput';
 import { usePpeRates } from '@/hooks/usePpeRates';
 import {
@@ -138,6 +139,7 @@ export default function LoanPricingForm() {
   const [lockDays, setLockDays] = useState<LockDays>(30);
   const [propertyAddress, setPropertyAddress] = useState('');
   const [activeTab, setActiveTab] = useState<'quote' | 'breakdown'>('quote');
+  const [isApplicationModalOpen, setIsApplicationModalOpen] = useState(false);
   const [now, setNow] = useState<Date | null>(null);
 
   const product = LOAN_PRODUCTS.find((item) => item.id === productId) ?? LOAN_PRODUCTS[0];
@@ -157,6 +159,14 @@ export default function LoanPricingForm() {
     setNow(new Date());
     const id = window.setInterval(() => setNow(new Date()), 1000);
     return () => window.clearInterval(id);
+  }, []);
+
+  useEffect(() => {
+    const handleStartApp = () => {
+      setIsApplicationModalOpen(true);
+    };
+    window.addEventListener('ifund:start-application', handleStartApp);
+    return () => window.removeEventListener('ifund:start-application', handleStartApp);
   }, []);
 
   const quote = useMemo(() => {
@@ -296,7 +306,7 @@ export default function LoanPricingForm() {
   }, [quote, creditScore, occupancy, propertyType, lockDays, propertyAddress]);
 
   return (
-    <section className="pricing-engine" aria-label="Mortgage pricing engine">
+    <section className="pricing-engine" id="pricer" aria-label="Mortgage pricing engine">
       <div className="pricing-engine__form-side">
         {/* Top Header Pill & Goal Switcher */}
         <div className="ppe-badge-row">
@@ -941,9 +951,13 @@ export default function LoanPricingForm() {
                 </div>
               )}
 
-              <a className="quote-card__cta" href={consultationHref}>
-                Lock This Rate — Request Consultation
-              </a>
+              <button
+                type="button"
+                className="quote-card__cta"
+                onClick={() => setIsApplicationModalOpen(true)}
+              >
+                Start Application
+              </button>
               <p className="quote-card__disclaimer">
                 Optimal Blue PPE scenario rates are indicative estimates for illustration only and do not constitute a commitment to lend. Final pricing is subject to property appraisal, title, documentation, and investor underwriting guidelines. Equal Housing Lender.
               </p>
@@ -953,6 +967,39 @@ export default function LoanPricingForm() {
           <div className="quote-card__empty">Enter a scenario to see live pricing.</div>
         )}
       </aside>
+
+      {/* Step 2 Application Modal */}
+      <ApplicationModal
+        isOpen={isApplicationModalOpen}
+        onClose={() => setIsApplicationModalOpen(false)}
+        quote={quote}
+        scenarioData={{
+          productId,
+          propertyValue,
+          purchasePrice,
+          downPayment,
+          currentBalance,
+          currentRate,
+          cashOutAmount,
+          cashOutPurpose,
+          subordinateFinancing,
+          helocLine,
+          helocDraw,
+          firstLienRate,
+          creditScore,
+          termMonths,
+          occupancy,
+          propertyType,
+          lockDays,
+          propertyAddress,
+          firstTimeHomebuyer,
+          waiveEscrow,
+          financeUpfrontMip,
+          estimatedTaxMonthly,
+          estimatedInsMonthly,
+          totalWithPiti,
+        }}
+      />
     </section>
   );
 }
